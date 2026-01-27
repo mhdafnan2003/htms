@@ -7,8 +7,8 @@ import { withRole } from '@/lib/middleware';
 async function markAttendance(req: NextRequest, context: any, user: any) {
   try {
     await dbConnect();
-    
-    const { studentId, date, status, remarks } = await req.json();
+
+    const { studentId, date, status, remarks, classGrade, entryTime, exitTime, isManualOverride } = await req.json();
 
     // Verify student exists
     const student = await Student.findById(studentId);
@@ -19,6 +19,9 @@ async function markAttendance(req: NextRequest, context: any, user: any) {
       );
     }
 
+    // Use student's classGrade if not provided
+    const attendanceClass = classGrade || student.classGrade;
+
     // Check if attendance already marked for this date
     const existingAttendance = await Attendance.findOne({
       studentId,
@@ -28,9 +31,13 @@ async function markAttendance(req: NextRequest, context: any, user: any) {
     if (existingAttendance) {
       // Update existing attendance
       existingAttendance.status = status;
-      if (remarks !== undefined) {
-        existingAttendance.remarks = remarks;
-      }
+      existingAttendance.classGrade = attendanceClass;
+      if (remarks !== undefined) existingAttendance.remarks = remarks;
+      if (entryTime !== undefined) existingAttendance.entryTime = entryTime;
+      if (exitTime !== undefined) existingAttendance.exitTime = exitTime;
+      if (isManualOverride !== undefined) existingAttendance.isManualOverride = isManualOverride;
+      existingAttendance.markedBy = user._id;
+
       await existingAttendance.save();
       return NextResponse.json(existingAttendance);
     }
@@ -40,7 +47,12 @@ async function markAttendance(req: NextRequest, context: any, user: any) {
       studentId,
       date: new Date(date),
       status,
+      classGrade: attendanceClass,
+      entryTime,
+      exitTime,
+      isManualOverride: isManualOverride || false,
       remarks,
+      markedBy: user._id,
     });
 
     await attendance.save();

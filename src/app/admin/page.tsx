@@ -9,16 +9,16 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import TrendingDownIcon from '@mui/icons-material/TrendingDown';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AssessmentIcon from '@mui/icons-material/Assessment';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  PieChart, 
-  Pie, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
   Cell,
   LineChart,
   Line,
@@ -32,9 +32,12 @@ interface DashboardStats {
   pendingFees: number;
   averageAttendance: number;
   totalSubjects: number;
+  classDistribution?: Array<{ name: string; value: number; count: number }>;
+  attendanceChartData?: Array<{ month: string; attendance: number }>;
+  feeChartData?: Array<{ month: string; collected: number; pending: number }>;
 }
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b'];
+const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -43,34 +46,27 @@ export default function AdminDashboard() {
     monthlyFeeCollection: 0,
     pendingFees: 0,
     averageAttendance: 0,
-    totalSubjects: 0
+    totalSubjects: 0,
+    classDistribution: [],
+    attendanceChartData: [],
+    feeChartData: []
   });
-  
+
   const [loading, setLoading] = useState(true);
 
-  // Sample data for charts
-  const attendanceData = [
-    { month: 'Jan', attendance: 85 },
-    { month: 'Feb', attendance: 92 },
-    { month: 'Mar', attendance: 78 },
-    { month: 'Apr', attendance: 88 },
-    { month: 'May', attendance: 95 },
-    { month: 'Jun', attendance: 87 }
+  // Use real data from API, with fallback samples if empty
+  const attendanceData = stats.attendanceChartData?.length ? stats.attendanceChartData : [
+    { month: 'Jan', attendance: 0 },
+    { month: 'Feb', attendance: 0 },
+    { month: 'Mar', attendance: 0 }
   ];
 
-  const feeCollectionData = [
-    { month: 'Jan', collected: 45000, pending: 15000 },
-    { month: 'Feb', collected: 52000, pending: 8000 },
-    { month: 'Mar', collected: 48000, pending: 12000 },
-    { month: 'Apr', collected: 55000, pending: 5000 },
-    { month: 'May', collected: 58000, pending: 2000 },
-    { month: 'Jun', collected: 60000, pending: 0 }
+  const feeCollectionData = stats.feeChartData?.length ? stats.feeChartData : [
+    { month: 'Jan', collected: 0, pending: 0 }
   ];
 
-  const classDistribution = [
-    { name: 'Class 1-5', value: 35, count: 15 },
-    { name: 'Class 6-8', value: 40, count: 18 },
-    { name: 'Class 9-10', value: 25, count: 12 }
+  const classDistribution = stats.classDistribution?.length ? stats.classDistribution : [
+    { name: 'No Data', value: 100, count: 0 }
   ];
 
   useEffect(() => {
@@ -78,7 +74,7 @@ export default function AdminDashboard() {
     fetchDashboardStats();
   }, []);
 
-const fetchDashboardStats = async () => {
+  const fetchDashboardStats = async () => {
     try {
       // Get auth token from localStorage
       const token = localStorage.getItem('token');
@@ -108,20 +104,23 @@ const fetchDashboardStats = async () => {
         monthlyFeeCollection: 0,
         pendingFees: 0,
         averageAttendance: 0,
-        totalSubjects: 0
+        totalSubjects: 0,
+        classDistribution: [],
+        attendanceChartData: [],
+        feeChartData: []
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const StatCard = ({ 
-    title, 
-    value, 
-    change, 
-    changeType, 
-    icon, 
-    color 
+  const StatCard = ({
+    title,
+    value,
+    change,
+    changeType,
+    icon,
+    color
   }: {
     title: string;
     value: string | number;
@@ -142,9 +141,8 @@ const fetchDashboardStats = async () => {
               ) : (
                 <TrendingDownIcon className="w-4 h-4 text-red-500 mr-1" />
               )}
-              <span className={`text-sm font-medium ${
-                changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-              }`}>
+              <span className={`text-sm font-medium ${changeType === 'positive' ? 'text-green-600' : 'text-red-600'
+                }`}>
                 {change}
               </span>
             </div>
@@ -183,7 +181,7 @@ const fetchDashboardStats = async () => {
           <StatCard
             title="Present Today"
             value={`${stats.presentToday}/${stats.totalStudents}`}
-            change={`${Math.round((stats.presentToday / stats.totalStudents) * 100)}%`}
+            change={`${stats.totalStudents > 0 ? Math.round((stats.presentToday / stats.totalStudents) * 100) : 0}%`}
             changeType="positive"
             icon={<CalendarTodayIcon className="w-6 h-6 text-white" />}
             color="bg-green-500"
@@ -217,10 +215,10 @@ const fetchDashboardStats = async () => {
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Line 
-                  type="monotone" 
-                  dataKey="attendance" 
-                  stroke="#3b82f6" 
+                <Line
+                  type="monotone"
+                  dataKey="attendance"
+                  stroke="#3b82f6"
                   strokeWidth={2}
                   dot={{ fill: '#3b82f6' }}
                 />
@@ -283,12 +281,11 @@ const fetchDashboardStats = async () => {
                 { time: '2 days ago', activity: 'Monthly fee report generated', type: 'report' }
               ].map((activity, index) => (
                 <div key={index} className="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-b-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${
-                    activity.type === 'admission' ? 'bg-blue-500' :
+                  <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === 'admission' ? 'bg-blue-500' :
                     activity.type === 'payment' ? 'bg-green-500' :
-                    activity.type === 'attendance' ? 'bg-yellow-500' :
-                    activity.type === 'marks' ? 'bg-purple-500' : 'bg-gray-500'
-                  }`}></div>
+                      activity.type === 'attendance' ? 'bg-yellow-500' :
+                        activity.type === 'marks' ? 'bg-purple-500' : 'bg-gray-500'
+                    }`}></div>
                   <div className="flex-1">
                     <p className="text-sm text-gray-900">{activity.activity}</p>
                     <p className="text-xs text-gray-500 mt-1">{activity.time}</p>

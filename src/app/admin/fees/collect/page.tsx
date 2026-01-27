@@ -1,20 +1,26 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import PaymentIcon from '@mui/icons-material/Payment';
 import SearchIcon from '@mui/icons-material/Search';
 import ReceiptIcon from '@mui/icons-material/Receipt';
-import FilterListIcon from '@mui/icons-material/FilterList';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
+import CancelIcon from '@mui/icons-material/Cancel';
 
-interface Student {
+interface StudentFee {
   _id: string;
   studentId: string;
   fullName: string;
   classGrade: string;
   monthlyFeeAmount: number;
-  contactNumber: string;
   parentName: string;
+  parentPhone: string;
+  feeStatus: 'PAID' | 'PARTIAL' | 'NOT_PAID';
+  paidAmount: number;
+  balanceAmount: number;
+  lastPaymentDate: string | null;
 }
 
 interface FeePayment {
@@ -22,39 +28,40 @@ interface FeePayment {
   month: string;
   paidAmount: number;
   paymentDate: string;
-  paymentMethod: 'CASH' | 'CARD' | 'UPI' | 'BANK_TRANSFER' | 'CHEQUE';
+  paymentMethod: 'Cash' | 'Online' | 'UPI' | 'Bank Transfer';
   transactionRef?: string;
   remarks?: string;
 }
 
 export default function CollectFeesPage() {
-  const [students, setStudents] = useState<Student[]>([]);
-  const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentFee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<StudentFee | null>(null);
   const [paymentData, setPaymentData] = useState<FeePayment>({
     studentId: '',
-    month: selectedMonth,
+    month: '',
     paidAmount: 0,
     paymentDate: new Date().toISOString().split('T')[0],
-    paymentMethod: 'CASH',
+    paymentMethod: 'Cash',
     transactionRef: '',
     remarks: ''
   });
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [classes, setClasses] = useState<string[]>([]);
 
   const paymentMethods = [
-    { value: 'CASH', label: 'Cash' },
-    { value: 'CARD', label: 'Card' },
+    { value: 'Cash', label: 'Cash' },
+    { value: 'Online', label: 'Online' },
     { value: 'UPI', label: 'UPI' },
-    { value: 'BANK_TRANSFER', label: 'Bank Transfer' },
-    { value: 'CHEQUE', label: 'Cheque' }
+    { value: 'Bank Transfer', label: 'Bank Transfer' }
   ];
 
   const months = [
@@ -62,55 +69,79 @@ export default function CollectFeesPage() {
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
+  // Get unique classes from students
   useEffect(() => {
-    fetchStudents();
-  }, []);
+    const uniqueClasses = [...new Set(students.map(s => s.classGrade))].sort();
+    setClasses(uniqueClasses);
+  }, [students]);
+
+  // Filter students based on all filters
+  const filteredStudents = useMemo(() => {
+    return students.filter(student => {
+      // Search filter
+      const matchesSearch = !searchTerm ||
+        student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.parentName?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Class filter
+      const matchesClass = selectedClass === 'all' || student.classGrade === selectedClass;
+
+      // Status filter
+      let matchesStatus = true;
+      if (statusFilter === 'paid') {
+        matchesStatus = student.feeStatus === 'PAID';
+      } else if (statusFilter === 'partial') {
+        matchesStatus = student.feeStatus === 'PARTIAL';
+      } else if (statusFilter === 'unpaid') {
+        matchesStatus = student.feeStatus === 'NOT_PAID';
+      }
+
+      return matchesSearch && matchesClass && matchesStatus;
+    });
+  }, [students, searchTerm, selectedClass, statusFilter]);
+
+  // Summary stats
+  const stats = useMemo(() => {
+    const paid = students.filter(s => s.feeStatus === 'PAID').length;
+    const partial = students.filter(s => s.feeStatus === 'PARTIAL').length;
+    const unpaid = students.filter(s => s.feeStatus === 'NOT_PAID').length;
+    const totalCollected = students.reduce((sum, s) => sum + s.paidAmount, 0);
+    const totalPending = students.reduce((sum, s) => sum + s.balanceAmount, 0);
+    return { paid, partial, unpaid, totalCollected, totalPending };
+  }, [students]);
 
   useEffect(() => {
-    filterStudents();
-  }, [students, searchTerm]);
+    fetchFeeStatus();
+  }, [selectedMonth]);
 
-  const fetchStudents = async () => {
+  const fetchFeeStatus = async () => {
+    setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/students', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await fetch(`/api/fees/status?month=${selectedMonth}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setStudents(data.students || []);
       }
     } catch (error) {
-      console.error('Error fetching students:', error);
+      console.error('Error fetching fee status:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filterStudents = () => {
-    if (!searchTerm) {
-      setFilteredStudents(students);
-    } else {
-      const filtered = students.filter(student =>
-        student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.parentName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredStudents(filtered);
-    }
-  };
-
-  const openPaymentForm = (student: Student) => {
+  const openPaymentForm = (student: StudentFee) => {
     setSelectedStudent(student);
     setPaymentData({
       studentId: student._id,
       month: selectedMonth,
-      paidAmount: student.monthlyFeeAmount,
+      paidAmount: student.balanceAmount,
       paymentDate: new Date().toISOString().split('T')[0],
-      paymentMethod: 'CASH',
+      paymentMethod: 'Cash',
       transactionRef: '',
       remarks: ''
     });
@@ -119,7 +150,7 @@ export default function CollectFeesPage() {
 
   const processPayment = async () => {
     if (!selectedStudent) return;
-    
+
     setProcessing(true);
     try {
       const token = localStorage.getItem('token');
@@ -137,17 +168,7 @@ export default function CollectFeesPage() {
         alert(`Payment processed successfully! Receipt Number: ${result.receiptNumber}`);
         setShowPaymentForm(false);
         setSelectedStudent(null);
-        
-        // Reset form
-        setPaymentData({
-          studentId: '',
-          month: selectedMonth,
-          paidAmount: 0,
-          paymentDate: new Date().toISOString().split('T')[0],
-          paymentMethod: 'CASH',
-          transactionRef: '',
-          remarks: ''
-        });
+        fetchFeeStatus(); // Refresh data
       } else {
         const error = await response.json();
         alert(`Error: ${error.message}`);
@@ -165,11 +186,37 @@ export default function CollectFeesPage() {
     return `${months[parseInt(month) - 1]} ${year}`;
   };
 
-  if (loading) {
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'PAID':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+            <CheckCircleIcon style={{ fontSize: 14 }} />
+            Paid
+          </span>
+        );
+      case 'PARTIAL':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+            <WarningIcon style={{ fontSize: 14 }} />
+            Partial
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">
+            <CancelIcon style={{ fontSize: 14 }} />
+            Not Paid
+          </span>
+        );
+    }
+  };
+
+  if (loading && students.length === 0) {
     return (
       <AdminLayout title="Collect Fees">
         <div className="flex items-center justify-center h-64">
-          <div className="text-lg">Loading students...</div>
+          <div className="text-lg text-gray-600">Loading...</div>
         </div>
       </AdminLayout>
     );
@@ -177,41 +224,94 @@ export default function CollectFeesPage() {
 
   return (
     <AdminLayout title="Collect Fees">
-      <div className="space-y-6">
+      <div className="space-y-4">
+        {/* Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <p className="text-sm text-gray-500">Total Students</p>
+            <p className="text-2xl font-bold text-gray-900">{students.length}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-green-200 p-4">
+            <p className="text-sm text-green-600">Paid</p>
+            <p className="text-2xl font-bold text-green-600">{stats.paid}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-yellow-200 p-4">
+            <p className="text-sm text-yellow-600">Partial</p>
+            <p className="text-2xl font-bold text-yellow-600">{stats.partial}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-red-200 p-4">
+            <p className="text-sm text-red-600">Unpaid</p>
+            <p className="text-2xl font-bold text-red-600">{stats.unpaid}</p>
+          </div>
+          <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-4">
+            <p className="text-sm text-blue-600">Collected</p>
+            <p className="text-xl font-bold text-blue-600">₹{stats.totalCollected.toLocaleString('en-IN')}</p>
+          </div>
+        </div>
+
         {/* Filters */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search by student name, ID, or parent name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <div className="flex flex-wrap items-end gap-4">
+            {/* Search */}
+            <div className="flex-1 min-w-[200px]">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Name, ID, or Parent..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
             </div>
-            
+
+            {/* Class Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Month
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
+              <select
+                value={selectedClass}
+                onChange={(e) => setSelectedClass(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              >
+                <option value="all">All Classes</option>
+                {classes.map(cls => (
+                  <option key={cls} value={cls}>{cls}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Month Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(e.target.value)}
-                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
               >
                 {Array.from({ length: 12 }, (_, i) => {
                   const date = new Date();
                   date.setMonth(date.getMonth() - 6 + i);
                   const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
                   const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                  return (
-                    <option key={value} value={value}>
-                      {label}
-                    </option>
-                  );
+                  return <option key={value} value={value}>{label}</option>;
                 })}
+              </select>
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              >
+                <option value="all">All Status</option>
+                <option value="paid">Paid</option>
+                <option value="partial">Partially Paid</option>
+                <option value="unpaid">Not Paid</option>
               </select>
             </div>
           </div>
@@ -219,72 +319,85 @@ export default function CollectFeesPage() {
 
         {/* Students List */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
               Students ({filteredStudents.length}) - {getMonthName(selectedMonth)}
             </h2>
           </div>
-          
-          <div className="divide-y divide-gray-200">
-            {filteredStudents.map((student) => (
-              <div key={student._id} className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {student.fullName.charAt(0)}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-medium text-gray-900">
-                          {student.fullName}
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          ID: {student.studentId} | Class: {student.classGrade}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          Parent: {student.parentName} | {student.contactNumber}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-gray-900">
+
+          {filteredStudents.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Student</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Class</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Fee Amount</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Paid</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Balance</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Status</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredStudents.map((student) => (
+                    <tr key={student._id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-semibold text-sm">
+                              {student.fullName.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-gray-900">{student.fullName}</p>
+                            <p className="text-xs text-gray-500">{student.studentId}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-gray-700">{student.classGrade}</td>
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">
                         ₹{student.monthlyFeeAmount.toLocaleString('en-IN')}
-                      </p>
-                      <p className="text-sm text-gray-600">Monthly Fee</p>
-                    </div>
-                    
-                    <button
-                      onClick={() => openPaymentForm(student)}
-                      className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                    >
-                      <PaymentIcon className="w-4 h-4" />
-                      Collect Fee
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                      </td>
+                      <td className="px-4 py-3 text-right text-green-600 font-medium">
+                        ₹{student.paidAmount.toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 text-right text-red-600 font-medium">
+                        ₹{student.balanceAmount.toLocaleString('en-IN')}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {getStatusBadge(student.feeStatus)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {student.feeStatus !== 'PAID' ? (
+                          <button
+                            onClick={() => openPaymentForm(student)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600"
+                          >
+                            <PaymentIcon style={{ fontSize: 16 }} />
+                            Collect
+                          </button>
+                        ) : (
+                          <span className="text-gray-400 text-sm">Completed</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="p-12 text-center">
+              <p className="text-gray-500">No students found matching your filters</p>
+            </div>
+          )}
         </div>
-        
-        {filteredStudents.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <p className="text-gray-500 text-lg">
-              {searchTerm ? 'No students found matching your search' : 'No students found'}
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Payment Modal */}
       {showPaymentForm && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full max-h-90vh overflow-y-auto">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold text-gray-900">Collect Fee Payment</h3>
@@ -295,14 +408,18 @@ export default function CollectFeesPage() {
                   ✕
                 </button>
               </div>
-              
+
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="font-medium text-gray-900">{selectedStudent.fullName}</p>
-                  <p className="text-sm text-gray-600">ID: {selectedStudent.studentId}</p>
+                  <p className="text-sm text-gray-600">ID: {selectedStudent.studentId} | Class: {selectedStudent.classGrade}</p>
                   <p className="text-sm text-gray-600">Month: {getMonthName(selectedMonth)}</p>
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span>Total Fee: ₹{selectedStudent.monthlyFeeAmount.toLocaleString('en-IN')}</span>
+                    <span className="text-red-600">Balance: ₹{selectedStudent.balanceAmount.toLocaleString('en-IN')}</span>
+                  </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Amount to Pay *
@@ -311,15 +428,12 @@ export default function CollectFeesPage() {
                     type="number"
                     value={paymentData.paidAmount}
                     onChange={(e) => setPaymentData({ ...paymentData, paidAmount: Number(e.target.value) })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                     min="0"
-                    step="0.01"
+                    max={selectedStudent.balanceAmount}
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Monthly fee: ₹{selectedStudent.monthlyFeeAmount.toLocaleString('en-IN')}
-                  </p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Payment Date *
@@ -328,10 +442,10 @@ export default function CollectFeesPage() {
                     type="date"
                     value={paymentData.paymentDate}
                     onChange={(e) => setPaymentData({ ...paymentData, paymentDate: e.target.value })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Payment Method *
@@ -339,7 +453,7 @@ export default function CollectFeesPage() {
                   <select
                     value={paymentData.paymentMethod}
                     onChange={(e) => setPaymentData({ ...paymentData, paymentMethod: e.target.value as any })}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                   >
                     {paymentMethods.map(method => (
                       <option key={method.value} value={method.value}>
@@ -348,7 +462,7 @@ export default function CollectFeesPage() {
                     ))}
                   </select>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Transaction Reference
@@ -358,10 +472,10 @@ export default function CollectFeesPage() {
                     value={paymentData.transactionRef}
                     onChange={(e) => setPaymentData({ ...paymentData, transactionRef: e.target.value })}
                     placeholder="Transaction ID, Cheque number, etc."
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Remarks
@@ -369,25 +483,25 @@ export default function CollectFeesPage() {
                   <textarea
                     value={paymentData.remarks}
                     onChange={(e) => setPaymentData({ ...paymentData, remarks: e.target.value })}
-                    rows={3}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={2}
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                   />
                 </div>
               </div>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowPaymentForm(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={processPayment}
                   disabled={processing || paymentData.paidAmount <= 0}
-                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  <ReceiptIcon className="w-4 h-4" />
+                  <ReceiptIcon style={{ fontSize: 18 }} />
                   {processing ? 'Processing...' : 'Process Payment'}
                 </button>
               </div>

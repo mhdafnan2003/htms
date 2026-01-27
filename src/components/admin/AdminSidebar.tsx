@@ -59,8 +59,8 @@ const menuItems = [
     label: 'Exam/Mark',
     key: 'exam',
     children: [
-      { label: 'Add Marks', href: '/admin/marks/add' },
-      { label: 'View Marks', href: '/admin/marks/view' },
+      { label: 'Exams & Marks', href: '/admin/marks' },
+      { label: 'View Results', href: '/admin/marks/results' },
       { label: 'Progress Report', href: '/admin/marks/report' }
     ]
   },
@@ -78,23 +78,25 @@ const menuItems = [
 interface AdminSidebarProps {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  mobileOpen: boolean;
+  setMobileOpen: (open: boolean) => void;
 }
 
-export default function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarProps) {
+export default function AdminSidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: AdminSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const pathname = usePathname();
 
   const toggleExpanded = (key: string) => {
     if (collapsed) return; // Don't expand if sidebar is collapsed
-    
-    setExpandedItems(prev => 
-      prev.includes(key) 
+
+    setExpandedItems(prev =>
+      prev.includes(key)
         ? prev.filter(item => item !== key)
         : [...prev, key]
     );
   };
 
-  const isActive = (href?: string, children?: Array<{href: string}>) => {
+  const isActive = (href?: string, children?: Array<{ href: string }>) => {
     if (href && pathname === href) return true;
     if (children) {
       return children.some(child => pathname.startsWith(child.href));
@@ -103,87 +105,102 @@ export default function AdminSidebar({ collapsed, setCollapsed }: AdminSidebarPr
   };
 
   return (
-    <div className={`bg-blue-900 text-white h-screen transition-all duration-300 ${
-      collapsed ? 'w-16' : 'w-64'
-    } fixed left-0 top-0 z-50 overflow-hidden`}>
-      {/* Header */}
-      <div className="p-4 border-b border-blue-800 flex items-center justify-between">
-        {!collapsed && (
-          <h1 className="text-xl font-bold">HTMS Admin</h1>
-        )}
-        <button
-          onClick={() => setCollapsed(!collapsed)}
-          className="p-2 hover:bg-blue-800 rounded-lg transition-colors"
-        >
-          <MenuIcon />
-        </button>
-      </div>
+    <>
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
 
-      {/* Navigation */}
-      <nav className="mt-4">
-        {menuItems.map((item) => (
-          <div key={item.key}>
-            {item.href ? (
-              // Simple menu item
-              <Link
-                href={item.href}
-                className={`flex items-center px-4 py-3 hover:bg-blue-800 transition-colors ${
-                  isActive(item.href) ? 'bg-blue-800 border-r-4 border-yellow-400' : ''
-                }`}
-              >
-                <div className="w-6 h-6 flex items-center justify-center">
-                  {item.icon}
-                </div>
-                {!collapsed && (
-                  <span className="ml-3 text-sm font-medium">{item.label}</span>
-                )}
-              </Link>
-            ) : (
-              // Menu item with submenu
-              <div>
-                <button
-                  onClick={() => toggleExpanded(item.key)}
-                  className={`w-full flex items-center px-4 py-3 hover:bg-blue-800 transition-colors ${
-                    isActive(undefined, item.children) ? 'bg-blue-800' : ''
-                  }`}
+      <div className={`bg-blue-900 text-white h-screen transition-all duration-300 
+        fixed left-0 top-0 z-50 overflow-hidden
+        ${collapsed ? 'md:w-16' : 'md:w-64'}
+        w-64
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        md:translate-x-0
+      `}>
+        {/* Header */}
+        <div className="p-4 border-b border-blue-800 flex items-center justify-between">
+          {(!collapsed || mobileOpen) && (
+            <h1 className="text-xl font-bold">HTMS Admin</h1>
+          )}
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className="p-2 hover:bg-blue-800 rounded-lg transition-colors hidden md:block"
+          >
+            <MenuIcon />
+          </button>
+          {/* Mobile close button optional, but backdrop handles closing */}
+        </div>
+
+        {/* Navigation */}
+        <nav className="mt-4 overflow-y-auto h-[calc(100vh-80px)]">
+          {menuItems.map((item) => (
+            <div key={item.key}>
+              {item.href ? (
+                // Simple menu item
+                <Link
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center px-4 py-3 hover:bg-blue-800 transition-colors ${isActive(item.href) ? 'bg-blue-800 border-r-4 border-yellow-400' : ''
+                    }`}
                 >
                   <div className="w-6 h-6 flex items-center justify-center">
                     {item.icon}
                   </div>
-                  {!collapsed && (
-                    <>
-                      <span className="ml-3 text-sm font-medium flex-grow text-left">
-                        {item.label}
-                      </span>
-                      {expandedItems.includes(item.key) ? (
-                        <KeyboardArrowDownIcon className="w-5 h-5" />
-                      ) : (
-                        <KeyboardArrowRightIcon className="w-5 h-5" />
-                      )}\n                    </>
+                  {(!collapsed || mobileOpen) && (
+                    <span className="ml-3 text-sm font-medium">{item.label}</span>
                   )}
-                </button>
-                
-                {/* Submenu */}
-                {!collapsed && expandedItems.includes(item.key) && item.children && (
-                  <div className="bg-blue-800">
-                    {item.children.map((child) => (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={`block pl-12 pr-4 py-2 text-sm hover:bg-blue-700 transition-colors ${
-                          pathname === child.href ? 'bg-blue-700 border-r-4 border-yellow-400' : ''
-                        }`}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        ))}
-      </nav>
-    </div>
+                </Link>
+              ) : (
+                // Menu item with submenu
+                <div>
+                  <button
+                    onClick={() => toggleExpanded(item.key)}
+                    className={`w-full flex items-center px-4 py-3 hover:bg-blue-800 transition-colors ${isActive(undefined, item.children) ? 'bg-blue-800' : ''
+                      }`}
+                  >
+                    <div className="w-6 h-6 flex items-center justify-center">
+                      {item.icon}
+                    </div>
+                    {(!collapsed || mobileOpen) && (
+                      <>
+                        <span className="ml-3 text-sm font-medium flex-grow text-left">
+                          {item.label}
+                        </span>
+                        {expandedItems.includes(item.key) ? (
+                          <KeyboardArrowDownIcon className="w-5 h-5" />
+                        ) : (
+                          <KeyboardArrowRightIcon className="w-5 h-5" />
+                        )}
+                      </>
+                    )}
+                  </button>
+
+                  {/* Submenu */}
+                  {(!collapsed || mobileOpen) && expandedItems.includes(item.key) && item.children && (
+                    <div className="bg-blue-800">
+                      {item.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={() => setMobileOpen(false)}
+                          className={`block pl-12 pr-4 py-2 text-sm hover:bg-blue-700 transition-colors ${pathname === child.href ? 'bg-blue-700 border-r-4 border-yellow-400' : ''
+                            }`}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+      </div>
+    </>
   );
 }

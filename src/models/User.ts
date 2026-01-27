@@ -8,6 +8,12 @@ export interface IUser extends Document {
   phone: string;
   alternativePhone?: string;
   isActive: boolean;
+  profilePhoto?: string;
+  preferences?: {
+    theme: 'light' | 'dark';
+    language: string;
+    notifications: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,6 +46,22 @@ const UserSchema = new Schema<IUser>({
     type: Boolean,
     default: true,
   },
+  profilePhoto: String,
+  preferences: {
+    theme: {
+      type: String,
+      enum: ['light', 'dark'],
+      default: 'light'
+    },
+    language: {
+      type: String,
+      default: 'en'
+    },
+    notifications: {
+      type: Boolean,
+      default: true
+    }
+  }
 }, {
   timestamps: true,
 });

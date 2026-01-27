@@ -110,6 +110,18 @@ export default function NewAdmission() {
                 }
             });
 
+            console.log('FormData being sent:', {
+                section: formData.section,
+                rollNumber: formData.rollNumber,
+                email: formData.email,
+                bloodGroup: formData.bloodGroup,
+                medicalConditions: formData.medicalConditions,
+                parentRelation: formData.parentRelation,
+                city: formData.city,
+                state: formData.state,
+                pincode: formData.pincode,
+            });
+
             // Append files
             selectedFiles.forEach(file => {
                 data.append('documents', file);

@@ -67,6 +67,30 @@ export default function StudentsPage() {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this student?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/students/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert('Student deleted successfully');
+        fetchStudents();
+      } else {
+        alert('Failed to delete student');
+      }
+    } catch (error) {
+      console.error('Error deleting student:', error);
+      alert('An error occurred');
+    }
+  };
+
   const filterStudents = () => {
     let filtered = students;
 
@@ -119,7 +143,10 @@ export default function StudentsPage() {
             </h1>
           </div>
 
-          <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors">
+          <button
+            onClick={() => router.push('/admin/admission/new')}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
             <AddIcon className="w-4 h-4" />
             Add New Student
           </button>
@@ -135,14 +162,14 @@ export default function StudentsPage() {
                 placeholder="Search students..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <select
               value={classFilter}
               onChange={(e) => setClassFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Classes</option>
               {classes.map(cls => (
@@ -153,7 +180,7 @@ export default function StudentsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">All Status</option>
               {statuses.map(status => (
@@ -248,12 +275,14 @@ export default function StudentsPage() {
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         <button
+                          onClick={() => router.push(`/admin/students/edit/${student._id}?from=students`)}
                           className="text-blue-600 hover:text-blue-900 p-1 rounded"
                           title="Edit"
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handleDelete(student._id)}
                           className="text-red-600 hover:text-red-900 p-1 rounded"
                           title="Delete"
                         >
@@ -280,7 +309,10 @@ export default function StudentsPage() {
                 : 'Get started by adding your first student.'}
             </p>
             {!searchTerm && !classFilter && !statusFilter && (
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto">
+              <button
+                onClick={() => router.push('/admin/admission/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto"
+              >
                 <AddIcon className="w-4 h-4" />
                 Add First Student
               </button>

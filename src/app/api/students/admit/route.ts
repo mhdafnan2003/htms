@@ -31,6 +31,18 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
             formData = await req.json();
         }
 
+        console.log('Received formData:', {
+            section: formData.section,
+            rollNumber: formData.rollNumber,
+            email: formData.email,
+            bloodGroup: formData.bloodGroup,
+            medicalConditions: formData.medicalConditions,
+            parentRelation: formData.parentRelation,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.pincode,
+        });
+
         // Check if parent already exists
         let parent = await User.findOne({ email: formData.parentEmail });
 
@@ -85,14 +97,35 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
             gender: formData.gender.toUpperCase(),
             dob: new Date(formData.dateOfBirth),
             classGrade: formData.class,
+            section: formData.section,
+            rollNumber: formData.rollNumber,
             subjectsEnrolled: formData.subjects || [],
             linkedParentId: parent._id,
             secondaryMobile: formData.phone,
+            email: formData.email,
             address: fullAddress,
+            city: formData.city,
+            state: formData.state,
+            pincode: formData.pincode,
             admissionDate: new Date(formData.admissionDate),
             monthlyFeeAmount: Number(formData.monthlyFee),
+            bloodGroup: formData.bloodGroup,
+            medicalConditions: formData.medicalConditions,
+            parentRelation: formData.parentRelation,
             documents,
             status: 'ACTIVE',
+        });
+
+        console.log('Student object before save:', {
+            section: student.section,
+            rollNumber: student.rollNumber,
+            email: student.email,
+            bloodGroup: student.bloodGroup,
+            medicalConditions: student.medicalConditions,
+            parentRelation: student.parentRelation,
+            city: student.city,
+            state: student.state,
+            pincode: student.pincode,
         });
 
         await student.save();

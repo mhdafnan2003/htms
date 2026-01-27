@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link'; // Not needed but keeping existing imports structure if I can seeing file content again
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
@@ -9,6 +10,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import LightModeIcon from '@mui/icons-material/LightMode';
+import MenuIcon from '@mui/icons-material/Menu';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -17,6 +19,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title = 'Admin Dashboard' }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const { user, loading, logout } = useAuth();
   const router = useRouter();
@@ -49,22 +52,34 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
   return (
     <div className={`min-h-screen bg-gray-50 ${darkMode ? 'dark' : ''}`}>
       {/* Sidebar */}
-      <AdminSidebar collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} />
-      
+      <AdminSidebar
+        collapsed={sidebarCollapsed}
+        setCollapsed={setSidebarCollapsed}
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+      />
+
       {/* Main Content */}
-      <div className={`transition-all duration-300 ${
-        sidebarCollapsed ? 'ml-16' : 'ml-64'
-      }`}>
+      <div className={`transition-all duration-300 ${sidebarCollapsed ? 'md:ml-16' : 'md:ml-64'
+        } ml-0`}>
         {/* Top Header */}
         <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Welcome back, {user?.name || 'Admin'}
-              </p>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setMobileOpen(true)}
+                className="p-2 -ml-2 rounded-lg hover:bg-gray-100 md:hidden"
+              >
+                <MenuIcon className="text-gray-600" />
+              </button>
+              <div>
+                <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  Welcome back, {user?.name || 'Admin'}
+                </p>
+              </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {/* Dark Mode Toggle */}
               <button
@@ -74,7 +89,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
               >
                 {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
               </button>
-              
+
               {/* Notifications */}
               <button
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
@@ -85,7 +100,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
                   3
                 </span>
               </button>
-              
+
               {/* User Menu */}
               <div className="flex items-center space-x-3">
                 <div className="hidden md:block text-right">
@@ -94,11 +109,11 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
                   </p>
                   <p className="text-xs text-gray-600">{user?.email}</p>
                 </div>
-                
+
                 <button className="p-1 rounded-full hover:bg-gray-100 transition-colors">
                   <AccountCircleIcon className="w-8 h-8 text-gray-600" />
                 </button>
-                
+
                 <button
                   onClick={handleLogout}
                   className="p-2 rounded-lg hover:bg-red-50 text-red-600 transition-colors"
@@ -110,7 +125,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
             </div>
           </div>
         </header>
-        
+
         {/* Page Content */}
         <main className="p-6">
           <div className="max-w-7xl mx-auto">

@@ -240,7 +240,7 @@ export default function AdmissionList() {
                                                         <VisibilityIcon fontSize="small" />
                                                     </button>
                                                     <button
-                                                        onClick={() => router.push(`/admin/students/edit/${student._id}`)}
+                                                        onClick={() => router.push(`/admin/students/edit/${student._id}?from=admission`)}
                                                         className="p-1 text-green-600 hover:bg-green-50 rounded"
                                                         title="Edit"
                                                     >

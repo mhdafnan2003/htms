@@ -6,19 +6,28 @@ export interface IStudent extends Document {
   gender: 'MALE' | 'FEMALE' | 'OTHER';
   dob: Date;
   classGrade: string;
+  section?: string;
+  rollNumber?: string;
   schoolName?: string;
   subjectsEnrolled: string[];
   tutorAssigned?: string;
   linkedParentId: mongoose.Types.ObjectId;
   secondaryMobile?: string;
+  email?: string;
   address: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
   admissionDate: Date;
   monthlyFeeAmount: number;
+  bloodGroup?: string;
+  medicalConditions?: string;
+  parentRelation?: string;
   studentPhotoUrl?: string;
   parentIdCardPhotoUrl?: string;
   studentIdCardPhotoUrl?: string;
   documents?: Array<{ name: string; url: string }>;
-  status: 'ACTIVE' | 'INACTIVE';
+  status: 'ACTIVE' | 'INACTIVE' | 'GRADUATED';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -46,6 +55,8 @@ const StudentSchema = new Schema<IStudent>({
     type: String,
     required: true,
   },
+  section: String,
+  rollNumber: String,
   schoolName: String,
   subjectsEnrolled: {
     type: [String],
@@ -58,10 +69,14 @@ const StudentSchema = new Schema<IStudent>({
     required: true,
   },
   secondaryMobile: String,
+  email: String,
   address: {
     type: String,
     required: true,
   },
+  city: String,
+  state: String,
+  pincode: String,
   admissionDate: {
     type: Date,
     default: Date.now,
@@ -70,6 +85,9 @@ const StudentSchema = new Schema<IStudent>({
     type: Number,
     required: true,
   },
+  bloodGroup: String,
+  medicalConditions: String,
+  parentRelation: String,
   studentPhotoUrl: String,
   parentIdCardPhotoUrl: String,
   studentIdCardPhotoUrl: String,
@@ -79,7 +97,7 @@ const StudentSchema = new Schema<IStudent>({
   }],
   status: {
     type: String,
-    enum: ['ACTIVE', 'INACTIVE'],
+    enum: ['ACTIVE', 'INACTIVE', 'GRADUATED'],
     default: 'ACTIVE',
   },
 }, {

@@ -24,13 +24,22 @@ interface Student {
     dateOfBirth: string;
     class: string;
     classGrade: string;
+    section?: string;
+    rollNumber?: string;
     subjects: string[];
     phone: string;
+    email?: string;
     address: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
     admissionDate: string;
     monthlyFee: number;
     status: string;
     schoolName?: string;
+    bloodGroup?: string;
+    medicalConditions?: string;
+    parentRelation?: string;
     documents?: Array<{ name: string; url: string }>;
     parent: {
         _id: string;
@@ -69,6 +78,7 @@ export default function StudentProfile() {
             }
 
             const data = await response.json();
+            console.log('Student data received:', data.student);
             setStudent(data.student);
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -155,7 +165,7 @@ export default function StudentProfile() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => router.push(`/admin/students/edit/${student._id}`)}
+                            onClick={() => router.push(`/admin/students/edit/${student._id}?from=profile`)}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             <EditIcon fontSize="small" />
@@ -182,8 +192,8 @@ export default function StudentProfile() {
                             <p className="text-gray-600 mt-1">Student ID: {student.studentId}</p>
                             <div className="flex items-center gap-4 mt-2">
                                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${student.status === 'ACTIVE'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}>
                                     {student.status}
                                 </span>
@@ -240,6 +250,20 @@ export default function StudentProfile() {
                                 label="Class"
                                 value={`Class ${student.class}`}
                             />
+                            {student.section && (
+                                <InfoCard
+                                    icon={<SchoolIcon fontSize="small" />}
+                                    label="Section"
+                                    value={student.section}
+                                />
+                            )}
+                            {student.rollNumber && (
+                                <InfoCard
+                                    icon={<SchoolIcon fontSize="small" />}
+                                    label="Roll Number"
+                                    value={student.rollNumber}
+                                />
+                            )}
                             <InfoCard
                                 icon={<CalendarTodayIcon fontSize="small" />}
                                 label="Admission Date"
@@ -310,19 +334,40 @@ export default function StudentProfile() {
                                 label="Address"
                                 value={student.address}
                             />
+                            {student.city && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="City"
+                                    value={student.city}
+                                />
+                            )}
+                            {student.state && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="State"
+                                    value={student.state}
+                                />
+                            )}
+                            {student.pincode && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="Pincode"
+                                    value={student.pincode}
+                                />
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {/* Subjects */}
-                {student.subjects && student.subjects.length > 0 && (
+                {(student.subjects && student.subjects.length > 0 || student.subjectsEnrolled && student.subjectsEnrolled.length > 0) && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <SchoolIcon className="text-blue-600" />
                             Enrolled Subjects
                         </h2>
                         <div className="flex flex-wrap gap-2">
-                            {student.subjects.map((subject, index) => (
+                            {(student.subjects || student.subjectsEnrolled || []).map((subject, index) => (
                                 <span
                                     key={index}
                                     className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
@@ -330,6 +375,57 @@ export default function StudentProfile() {
                                     {subject}
                                 </span>
                             ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Health & Additional Information */}
+                {(student.bloodGroup || student.medicalConditions || student.email || student.parentRelation) && (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <PersonIcon className="text-blue-600" />
+                                Health Information
+                            </h2>
+                            <div className="space-y-3">
+                                {student.bloodGroup && (
+                                    <InfoCard
+                                        icon={<PersonIcon fontSize="small" />}
+                                        label="Blood Group"
+                                        value={student.bloodGroup}
+                                    />
+                                )}
+                                {student.medicalConditions && (
+                                    <InfoCard
+                                        icon={<PersonIcon fontSize="small" />}
+                                        label="Medical Conditions"
+                                        value={student.medicalConditions}
+                                    />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <PersonIcon className="text-blue-600" />
+                                Additional Information
+                            </h2>
+                            <div className="space-y-3">
+                                {student.email && (
+                                    <InfoCard
+                                        icon={<EmailIcon fontSize="small" />}
+                                        label="Student Email"
+                                        value={student.email}
+                                    />
+                                )}
+                                {student.parentRelation && (
+                                    <InfoCard
+                                        icon={<PersonIcon fontSize="small" />}
+                                        label="Relation to Parent"
+                                        value={student.parentRelation}
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
@@ -346,8 +442,8 @@ export default function StudentProfile() {
                                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 bg-blue-100 rounded text-blue-600">
-                                            {doc.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 
-                                             doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? 'IMG' : 'DOC'}
+                                            {doc.name.toLowerCase().endsWith('.pdf') ? 'PDF' :
+                                                doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? 'IMG' : 'DOC'}
                                         </div>
                                         <span className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{doc.name}</span>
                                     </div>

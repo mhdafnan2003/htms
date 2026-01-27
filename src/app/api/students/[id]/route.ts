@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Student from '@/models/Student';
+import User from '@/models/User';
 import { withRole } from '@/lib/middleware';
+import bcrypt from 'bcryptjs';
 
 async function getStudentById(req: NextRequest, context: any, user: any) {
     try {
@@ -21,6 +23,18 @@ async function getStudentById(req: NextRequest, context: any, user: any) {
             );
         }
 
+        console.log('Student from DB:', {
+            section: student.section,
+            rollNumber: student.rollNumber,
+            email: student.email,
+            city: student.city,
+            state: student.state,
+            pincode: student.pincode,
+            bloodGroup: student.bloodGroup,
+            medicalConditions: student.medicalConditions,
+            parentRelation: student.parentRelation,
+        });
+
         // Format response
         const formattedStudent = {
             _id: student._id,
@@ -31,14 +45,23 @@ async function getStudentById(req: NextRequest, context: any, user: any) {
             dateOfBirth: student.dob,
             class: student.classGrade,
             classGrade: student.classGrade,
+            section: student.section,
+            rollNumber: student.rollNumber,
+            email: student.email,
             subjects: student.subjectsEnrolled,
             subjectsEnrolled: student.subjectsEnrolled,
             phone: student.secondaryMobile,
             secondaryMobile: student.secondaryMobile,
             address: student.address,
+            city: student.city,
+            state: student.state,
+            pincode: student.pincode,
             admissionDate: student.admissionDate,
             monthlyFee: student.monthlyFeeAmount,
             monthlyFeeAmount: student.monthlyFeeAmount,
+            bloodGroup: student.bloodGroup,
+            medicalConditions: student.medicalConditions,
+            parentRelation: student.parentRelation,
             status: student.status,
             schoolName: student.schoolName,
             tutorAssigned: student.tutorAssigned,
@@ -108,21 +131,75 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         const updateData = await req.json();
 
         // Prepare update object, excluding fields that shouldn't be updated directly
-        const { 
-            _id, 
-            studentId, 
-            linkedParentId, 
-            createdAt, 
-            updatedAt, 
-            ...updateFields 
+        const {
+            _id: _ignored1,
+            studentId: _ignored2,
+            linkedParentId: _ignored3,
+            createdAt: _ignored4,
+            updatedAt: _ignored5,
+            // Extract parent fields
+            parentName,
+            parentEmail,
+            parentPhone,
+            parentAlternativePhone,
+            ...updateFields
         } = updateData;
 
-        // Handle date fields
-        if (updateFields.dob) {
-            updateFields.dob = new Date(updateFields.dob);
+        // Normalize gender to uppercase as required by Schema enum
+        if (updateFields.gender) {
+            updateFields.gender = updateFields.gender.toUpperCase();
         }
+
+        // Handle date fields safely
+        if (updateFields.dob) {
+            const dobDate = new Date(updateFields.dob);
+            if (isNaN(dobDate.getTime())) {
+                delete updateFields.dob; // Remove invalid date
+            } else {
+                updateFields.dob = dobDate;
+            }
+        }
+
         if (updateFields.admissionDate) {
-            updateFields.admissionDate = new Date(updateFields.admissionDate);
+            const admissionDate = new Date(updateFields.admissionDate);
+            if (isNaN(admissionDate.getTime())) {
+                delete updateFields.admissionDate; // Remove invalid date
+            } else {
+                updateFields.admissionDate = admissionDate;
+            }
+        }
+
+        // First, get the current student to find linked parent
+        const currentStudent = await Student.findById(id);
+        if (!currentStudent) {
+            return NextResponse.json(
+                { message: 'Student not found' },
+                { status: 404 }
+            );
+        }
+
+        // Update parent information if provided
+        if (currentStudent.linkedParentId && (parentName || parentEmail || parentPhone || parentAlternativePhone)) {
+            try {
+                const parentUpdateData: any = {};
+                if (parentName) parentUpdateData.name = parentName;
+                if (parentEmail) parentUpdateData.email = parentEmail;
+                if (parentPhone) {
+                    parentUpdateData.phone = parentPhone;
+                    // Also update password (phone is used as password for parents)
+                    parentUpdateData.password = await bcrypt.hash(parentPhone, 12);
+                }
+                if (parentAlternativePhone !== undefined) parentUpdateData.alternativePhone = parentAlternativePhone;
+
+                await User.findByIdAndUpdate(
+                    currentStudent.linkedParentId,
+                    parentUpdateData,
+                    { runValidators: true }
+                );
+            } catch (parentError) {
+                console.error('Error updating parent:', parentError);
+                // Continue with student update even if parent update fails
+            }
         }
 
         // Update the student
@@ -149,14 +226,23 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
             dateOfBirth: updatedStudent.dob,
             class: updatedStudent.classGrade,
             classGrade: updatedStudent.classGrade,
+            section: updatedStudent.section,
+            rollNumber: updatedStudent.rollNumber,
+            email: updatedStudent.email,
             subjects: updatedStudent.subjectsEnrolled,
             subjectsEnrolled: updatedStudent.subjectsEnrolled,
             phone: updatedStudent.secondaryMobile,
             secondaryMobile: updatedStudent.secondaryMobile,
             address: updatedStudent.address,
+            city: updatedStudent.city,
+            state: updatedStudent.state,
+            pincode: updatedStudent.pincode,
             admissionDate: updatedStudent.admissionDate,
             monthlyFee: updatedStudent.monthlyFeeAmount,
             monthlyFeeAmount: updatedStudent.monthlyFeeAmount,
+            bloodGroup: updatedStudent.bloodGroup,
+            medicalConditions: updatedStudent.medicalConditions,
+            parentRelation: updatedStudent.parentRelation,
             status: updatedStudent.status,
             schoolName: updatedStudent.schoolName,
             tutorAssigned: updatedStudent.tutorAssigned,
@@ -178,8 +264,9 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         return NextResponse.json({ student: formattedStudent });
     } catch (error: any) {
         console.error('Update student error:', error);
+        console.error('Error stack:', error.stack);
         return NextResponse.json(
-            { message: 'Internal server error', error: error.message },
+            { message: 'Internal server error', error: error.message, details: error.toString() },
             { status: 500 }
         );
     }
