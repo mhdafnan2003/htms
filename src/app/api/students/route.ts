@@ -21,7 +21,7 @@ async function createStudent(req: NextRequest, context: any, user: any) {
       parent = new User({
         email: studentData.parentEmail,
         password: hashedPassword,
-        name: studentData.parentName,
+        fullName: studentData.parentName,
         role: 'PARENT',
         phone: studentData.parentPhone,
       });
@@ -87,7 +87,7 @@ async function getStudents(req: NextRequest, context: any, user: any) {
     }
 
     const students = await Student.find(query)
-      .populate('linkedParentId', 'name email phone')
+      .populate('linkedParentId', 'fullName email phone')
       .sort({ createdAt: -1 });
 
     // Format response for students list page

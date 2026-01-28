@@ -31,18 +31,6 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
             formData = await req.json();
         }
 
-        console.log('Received formData:', {
-            section: formData.section,
-            rollNumber: formData.rollNumber,
-            email: formData.email,
-            bloodGroup: formData.bloodGroup,
-            medicalConditions: formData.medicalConditions,
-            parentRelation: formData.parentRelation,
-            city: formData.city,
-            state: formData.state,
-            pincode: formData.pincode,
-        });
-
         // Check if parent already exists
         let parent = await User.findOne({ email: formData.parentEmail });
 
@@ -53,7 +41,7 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
             parent = new User({
                 email: formData.parentEmail,
                 password: hashedPassword,
-                name: formData.parentName,
+                fullName: formData.parentName,
                 role: 'PARENT',
                 phone: formData.parentPhone,
                 alternativePhone: formData.parentAlternativePhone,
@@ -74,7 +62,7 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
         const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
         // Save uploaded files to disk
-        let documents: any[] = [];
+        let documents: { name: string; url: string }[] = [];
         if (files.length > 0) {
             try {
                 documents = await saveFiles(files);
@@ -114,18 +102,6 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
             parentRelation: formData.parentRelation,
             documents,
             status: 'ACTIVE',
-        });
-
-        console.log('Student object before save:', {
-            section: student.section,
-            rollNumber: student.rollNumber,
-            email: student.email,
-            bloodGroup: student.bloodGroup,
-            medicalConditions: student.medicalConditions,
-            parentRelation: student.parentRelation,
-            city: student.city,
-            state: student.state,
-            pincode: student.pincode,
         });
 
         await student.save();

@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const user = new User({
       email,
       password: hashedPassword,
-      name,
+      fullName: name,
       role: 'ADMIN', // Force role to ADMIN for admin registration
       phone,
     });
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       user: {
         id: user._id,
         email: user.email,
-        name: user.name,
+        name: user.fullName,
         role: user.role,
         phone: user.phone,
       },

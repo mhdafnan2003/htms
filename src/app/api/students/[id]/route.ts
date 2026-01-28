@@ -70,7 +70,7 @@ async function getStudentById(req: NextRequest, context: any, user: any) {
             documents: student.documents || [],
             parent: student.linkedParentId ? {
                 _id: student.linkedParentId._id,
-                name: student.linkedParentId.name,
+                name: student.linkedParentId.fullName,
                 email: student.linkedParentId.email,
                 phone: student.linkedParentId.phone,
                 alternativePhone: student.linkedParentId.alternativePhone,
@@ -254,7 +254,7 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
             documents: updatedStudent.documents || [],
             parent: updatedStudent.linkedParentId ? {
                 _id: updatedStudent.linkedParentId._id,
-                name: updatedStudent.linkedParentId.name,
+                name: updatedStudent.linkedParentId.fullName,
                 email: updatedStudent.linkedParentId.email,
                 phone: updatedStudent.linkedParentId.phone,
                 alternativePhone: updatedStudent.linkedParentId.alternativePhone,

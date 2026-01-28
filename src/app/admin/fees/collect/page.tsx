@@ -585,6 +585,7 @@ export default function CollectFeesPage() {
                     <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Paid</th>
                     <th className="px-4 py-3 text-right text-sm font-semibold text-gray-900">Balance</th>
                     <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Status</th>
+                    <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Payment Date</th>
                     <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">Action</th>
                   </tr>
                 </thead>
@@ -616,6 +617,13 @@ export default function CollectFeesPage() {
                       </td>
                       <td className="px-4 py-3 text-center">
                         {getStatusBadge(student.feeStatus)}
+                      </td>
+                      <td className="px-4 py-3 text-center text-sm text-gray-700">
+                        {student.lastPaymentDate ? new Date(student.lastPaymentDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        }) : '-'}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {student.feeStatus !== 'PAID' ? (

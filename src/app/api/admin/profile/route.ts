@@ -53,7 +53,7 @@ async function updateProfile(req: NextRequest, context: any, user: any) {
         }
 
         // Update basic info
-        currentUser.name = name;
+        currentUser.fullName = name;
         currentUser.email = email;
         currentUser.phone = phone;
 
@@ -94,7 +94,7 @@ async function updateProfile(req: NextRequest, context: any, user: any) {
         // Return updated user (excluding password)
         const updatedUser = {
             _id: currentUser._id,
-            name: currentUser.name,
+            name: currentUser.fullName,
             email: currentUser.email,
             phone: currentUser.phone,
             role: currentUser.role,
