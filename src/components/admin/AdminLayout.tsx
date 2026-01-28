@@ -1,10 +1,11 @@
 'use client';
 
-import Link from 'next/link'; // Not needed but keeping existing imports structure if I can seeing file content again
+import Link from 'next/link';
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -17,11 +18,12 @@ interface AdminLayoutProps {
   title?: string;
 }
 
-export default function AdminLayout({ children, title = 'Admin Dashboard' }: AdminLayoutProps) {
+export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const { user, loading, logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
@@ -36,10 +38,38 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
   };
 
   const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    // Here you would implement actual dark mode toggle
-    document.documentElement.classList.toggle('dark', !darkMode);
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+    if (newDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
+
+  // Load theme on mount - check localStorage first, then user preferences
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      const isDark = savedTheme === 'dark';
+      setDarkMode(isDark);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } else if (user?.preferences?.theme) {
+      const isDark = user.preferences.theme === 'dark';
+      setDarkMode(isDark);
+      localStorage.setItem('theme', user.preferences.theme);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+  }, [user]);
 
   if (loading || !user || user.role !== 'ADMIN') {
     return (
@@ -50,7 +80,7 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
   }
 
   return (
-    <div className={`min-h-screen bg-gray-50 ${darkMode ? 'dark' : ''}`}>
+    <div className="min-h-screen bg-gray-50">
       {/* Sidebar */}
       <AdminSidebar
         collapsed={sidebarCollapsed}
@@ -73,34 +103,14 @@ export default function AdminLayout({ children, title = 'Admin Dashboard' }: Adm
                 <MenuIcon className="text-gray-600" />
               </button>
               <div>
-                <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
+                <h1 className="text-2xl font-semibold text-gray-900">{title || t.dashboard}</h1>
                 <p className="text-sm text-gray-600 mt-1">
-                  Welcome back, {user?.name || 'Admin'}
+                  {t.welcomeBack}, {user?.name || 'Admin'}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Dark Mode Toggle */}
-              <button
-                onClick={toggleDarkMode}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              >
-                {darkMode ? <LightModeIcon /> : <DarkModeIcon />}
-              </button>
-
-              {/* Notifications */}
-              <button
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors relative"
-                title="Notifications"
-              >
-                <NotificationsIcon />
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                  3
-                </span>
-              </button>
-
               {/* User Menu */}
               <div className="flex items-center space-x-3">
                 <div className="hidden md:block text-right">

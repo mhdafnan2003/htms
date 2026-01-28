@@ -14,6 +14,8 @@ import HomeIcon from '@mui/icons-material/Home';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PaymentIcon from '@mui/icons-material/Payment';
 import DescriptionIcon from '@mui/icons-material/Description';
+import DownloadIcon from '@mui/icons-material/Download';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 interface Student {
     _id: string;
@@ -165,7 +167,7 @@ export default function StudentProfile() {
 
                     <div className="flex items-center gap-2">
                         <button
-                            onClick={() => router.push(`/admin/students/edit/${student._id}?from=profile`)}
+                            onClick={() => router.push(`/admin/students/edit/${student._id}`)}
                             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
                             <EditIcon fontSize="small" />
@@ -192,8 +194,8 @@ export default function StudentProfile() {
                             <p className="text-gray-600 mt-1">Student ID: {student.studentId}</p>
                             <div className="flex items-center gap-4 mt-2">
                                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${student.status === 'ACTIVE'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-red-100 text-red-800'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-red-100 text-red-800'
                                     }`}>
                                     {student.status}
                                 </span>
@@ -217,11 +219,6 @@ export default function StudentProfile() {
                                 value={student.fullName}
                             />
                             <InfoCard
-                                icon={<PersonIcon fontSize="small" />}
-                                label="Gender"
-                                value={student.gender}
-                            />
-                            <InfoCard
                                 icon={<CalendarTodayIcon fontSize="small" />}
                                 label="Date of Birth"
                                 value={new Date(student.dob).toLocaleDateString('en-IN', {
@@ -231,12 +228,115 @@ export default function StudentProfile() {
                                 })}
                             />
                             <InfoCard
+                                icon={<PersonIcon fontSize="small" />}
+                                label="Gender"
+                                value={student.gender}
+                            />
+                            {student.bloodGroup && (
+                                <InfoCard
+                                    icon={<PersonIcon fontSize="small" />}
+                                    label="Blood Group"
+                                    value={student.bloodGroup}
+                                />
+                            )}
+                            <InfoCard
                                 icon={<PhoneIcon fontSize="small" />}
                                 label="Phone Number"
                                 value={student.phone || 'Not provided'}
                             />
+                            {student.email && (
+                                <InfoCard
+                                    icon={<EmailIcon fontSize="small" />}
+                                    label="Email Address"
+                                    value={student.email}
+                                />
+                            )}
+                            {student.medicalConditions && (
+                                <InfoCard
+                                    icon={<PersonIcon fontSize="small" />}
+                                    label="Medical Conditions"
+                                    value={student.medicalConditions}
+                                />
+                            )}
                         </div>
                     </div>
+
+                    {/* Address Information */}
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <HomeIcon className="text-blue-600" />
+                            Address Information
+                        </h2>
+                        <div className="space-y-3">
+                            <InfoCard
+                                icon={<HomeIcon fontSize="small" />}
+                                label="Address"
+                                value={student.address}
+                            />
+                            {student.city && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="City"
+                                    value={student.city}
+                                />
+                            )}
+                            {student.state && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="State"
+                                    value={student.state}
+                                />
+                            )}
+                            {student.pincode && (
+                                <InfoCard
+                                    icon={<HomeIcon fontSize="small" />}
+                                    label="Pincode"
+                                    value={student.pincode}
+                                />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Parent/Guardian Information */}
+                    {student.parent && (
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                <PersonIcon className="text-blue-600" />
+                                Parent/Guardian Information
+                            </h2>
+                            <div className="space-y-3">
+                                <InfoCard
+                                    icon={<PersonIcon fontSize="small" />}
+                                    label="Parent/Guardian Name"
+                                    value={student.parent.name}
+                                />
+                                {student.parentRelation && (
+                                    <InfoCard
+                                        icon={<PersonIcon fontSize="small" />}
+                                        label="Relation"
+                                        value={student.parentRelation}
+                                    />
+                                )}
+                                <InfoCard
+                                    icon={<PhoneIcon fontSize="small" />}
+                                    label="Parent Phone"
+                                    value={student.parent.phone}
+                                />
+                                {student.parent.alternativePhone && (
+                                    <InfoCard
+                                        icon={<PhoneIcon fontSize="small" />}
+                                        label="Alternative Phone Number"
+                                        value={student.parent.alternativePhone}
+                                    />
+                                )}
+                                <InfoCard
+                                    icon={<EmailIcon fontSize="small" />}
+                                    label="Parent Email"
+                                    value={student.parent.email}
+                                />
+                            </div>
+                        </div>
+                    )}
 
                     {/* Academic Information */}
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -278,185 +378,71 @@ export default function StudentProfile() {
                                 label="Monthly Fee"
                                 value={`₹${student.monthlyFee.toLocaleString('en-IN')}`}
                             />
-                            {student.schoolName && (
-                                <InfoCard
-                                    icon={<SchoolIcon fontSize="small" />}
-                                    label="School Name"
-                                    value={student.schoolName}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Parent/Guardian Information */}
-                    {student.parent && (
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <PersonIcon className="text-blue-600" />
-                                Parent/Guardian Information
-                            </h2>
-                            <div className="space-y-3">
-                                <InfoCard
-                                    icon={<PersonIcon fontSize="small" />}
-                                    label="Name"
-                                    value={student.parent.name}
-                                />
-                                <InfoCard
-                                    icon={<EmailIcon fontSize="small" />}
-                                    label="Email"
-                                    value={student.parent.email}
-                                />
-                                <InfoCard
-                                    icon={<PhoneIcon fontSize="small" />}
-                                    label="Phone"
-                                    value={student.parent.phone}
-                                />
-                                {student.parent.alternativePhone && (
-                                    <InfoCard
-                                        icon={<PhoneIcon fontSize="small" />}
-                                        label="Alternative Phone"
-                                        value={student.parent.alternativePhone}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Address Information */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <HomeIcon className="text-blue-600" />
-                            Address Information
-                        </h2>
-                        <div className="space-y-3">
-                            <InfoCard
-                                icon={<HomeIcon fontSize="small" />}
-                                label="Address"
-                                value={student.address}
-                            />
-                            {student.city && (
-                                <InfoCard
-                                    icon={<HomeIcon fontSize="small" />}
-                                    label="City"
-                                    value={student.city}
-                                />
-                            )}
-                            {student.state && (
-                                <InfoCard
-                                    icon={<HomeIcon fontSize="small" />}
-                                    label="State"
-                                    value={student.state}
-                                />
-                            )}
-                            {student.pincode && (
-                                <InfoCard
-                                    icon={<HomeIcon fontSize="small" />}
-                                    label="Pincode"
-                                    value={student.pincode}
-                                />
+                            {(student.subjects && student.subjects.length > 0 || student.subjectsEnrolled && student.subjectsEnrolled.length > 0) && (
+                                <div className="pt-3 border-t">
+                                    <p className="text-sm text-gray-600 mb-2">Subjects</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {(student.subjects || student.subjectsEnrolled || []).map((subject, index) => (
+                                            <span
+                                                key={index}
+                                                className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
+                                            >
+                                                {subject}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
                         </div>
                     </div>
                 </div>
-
-                {/* Subjects */}
-                {(student.subjects && student.subjects.length > 0 || student.subjectsEnrolled && student.subjectsEnrolled.length > 0) && (
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                            <SchoolIcon className="text-blue-600" />
-                            Enrolled Subjects
-                        </h2>
-                        <div className="flex flex-wrap gap-2">
-                            {(student.subjects || student.subjectsEnrolled || []).map((subject, index) => (
-                                <span
-                                    key={index}
-                                    className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium"
-                                >
-                                    {subject}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Health & Additional Information */}
-                {(student.bloodGroup || student.medicalConditions || student.email || student.parentRelation) && (
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <PersonIcon className="text-blue-600" />
-                                Health Information
-                            </h2>
-                            <div className="space-y-3">
-                                {student.bloodGroup && (
-                                    <InfoCard
-                                        icon={<PersonIcon fontSize="small" />}
-                                        label="Blood Group"
-                                        value={student.bloodGroup}
-                                    />
-                                )}
-                                {student.medicalConditions && (
-                                    <InfoCard
-                                        icon={<PersonIcon fontSize="small" />}
-                                        label="Medical Conditions"
-                                        value={student.medicalConditions}
-                                    />
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <PersonIcon className="text-blue-600" />
-                                Additional Information
-                            </h2>
-                            <div className="space-y-3">
-                                {student.email && (
-                                    <InfoCard
-                                        icon={<EmailIcon fontSize="small" />}
-                                        label="Student Email"
-                                        value={student.email}
-                                    />
-                                )}
-                                {student.parentRelation && (
-                                    <InfoCard
-                                        icon={<PersonIcon fontSize="small" />}
-                                        label="Relation to Parent"
-                                        value={student.parentRelation}
-                                    />
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 {/* Documents */}
                 {student.documents && student.documents.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                             <DescriptionIcon className="text-blue-600" />
-                            Uploaded Documents
+                            Documents
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {student.documents.map((doc, index) => (
-                                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-blue-100 rounded text-blue-600">
-                                            {doc.name.toLowerCase().endsWith('.pdf') ? 'PDF' :
-                                                doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ? 'IMG' : 'DOC'}
+                            {student.documents.map((doc, index) => {
+                                const isPdf = doc.name.toLowerCase().endsWith('.pdf');
+                                const isImage = doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif)$/);
+                                const fileType = isPdf ? 'PDF' : isImage ? 'IMG' : 'DOC';
+                                const bgColor = isPdf ? 'bg-red-100 text-red-600' : isImage ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600';
+                                
+                                return (
+                                    <div key={index} className="flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
+                                        <div className="flex items-center gap-3 mb-3">
+                                            <div className={`px-3 py-1 rounded text-xs font-bold ${bgColor}`}>
+                                                {fileType}
+                                            </div>
                                         </div>
-                                        <span className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{doc.name}</span>
+                                        <p className="text-sm font-medium text-gray-900 mb-3 break-words" title={doc.name}>
+                                            {doc.name}
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <a
+                                                href={doc.url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium transition-colors"
+                                            >
+                                                <VisibilityIcon fontSize="small" />
+                                                View
+                                            </a>
+                                            <a
+                                                href={doc.url}
+                                                download={doc.name}
+                                                className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm font-medium transition-colors"
+                                            >
+                                                <DownloadIcon fontSize="small" />
+                                                Download
+                                            </a>
+                                        </div>
                                     </div>
-                                    <a
-                                        href={doc.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                                    >
-                                        View
-                                    </a>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </div>
                 )}

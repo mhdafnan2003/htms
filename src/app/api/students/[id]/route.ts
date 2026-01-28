@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Student from '@/models/Student';
-import User from '@/models/User';
 import { withRole } from '@/lib/middleware';
-import bcrypt from 'bcryptjs';
+import { saveFiles } from '@/lib/fileUpload';
 
 async function getStudentById(req: NextRequest, context: any, user: any) {
     try {
@@ -128,84 +127,87 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         const params = await context.params;
         const { id } = params;
 
-        const updateData = await req.json();
+        const contentType = req.headers.get('content-type') || '';
+        let updateFields: any = {};
+        let existingDocs: Array<{ name: string; url: string }> = [];
+        let newFiles: File[] = [];
+
+        // Check if request is FormData (for file uploads) or JSON
+        if (contentType.includes('multipart/form-data')) {
+            const formData = await req.formData();
+            
+            // Extract existing documents
+            const existingDocsStr = formData.get('existingDocuments');
+            if (existingDocsStr) {
+                try {
+                    existingDocs = JSON.parse(existingDocsStr as string);
+                } catch (e) {
+                    console.error('Failed to parse existing documents:', e);
+                }
+            }
+
+            // Extract new files
+            const files = formData.getAll('documents');
+            newFiles = files.filter((file): file is File => file instanceof File);
+
+            // Extract form fields
+            for (const [key, value] of formData.entries()) {
+                if (key !== 'documents' && key !== 'existingDocuments') {
+                    if (key.endsWith('[]')) {
+                        const actualKey = key.slice(0, -2);
+                        if (!updateFields[actualKey]) {
+                            updateFields[actualKey] = [];
+                        }
+                        updateFields[actualKey].push(value);
+                    } else {
+                        updateFields[key] = value;
+                    }
+                }
+            }
+
+            // Handle file uploads
+            let uploadedFiles: Array<{ name: string; url: string }> = [];
+            if (newFiles.length > 0) {
+                try {
+                    uploadedFiles = await saveFiles(newFiles);
+                } catch (error: any) {
+                    return NextResponse.json(
+                        { message: `File upload error: ${error.message}` },
+                        { status: 400 }
+                    );
+                }
+            }
+
+            // Combine existing and new documents
+            updateFields.documents = [...existingDocs, ...uploadedFiles];
+        } else {
+            // Handle JSON request (backward compatibility)
+            const updateData = await req.json();
+            updateFields = updateData;
+        }
 
         // Prepare update object, excluding fields that shouldn't be updated directly
-        const {
-            _id: _ignored1,
-            studentId: _ignored2,
-            linkedParentId: _ignored3,
-            createdAt: _ignored4,
-            updatedAt: _ignored5,
-            // Extract parent fields
-            parentName,
-            parentEmail,
-            parentPhone,
-            parentAlternativePhone,
-            ...updateFields
-        } = updateData;
+        const { 
+            _id, 
+            studentId, 
+            linkedParentId, 
+            createdAt, 
+            updatedAt, 
+            ...fieldsToUpdate 
+        } = updateFields;
 
-        // Normalize gender to uppercase as required by Schema enum
-        if (updateFields.gender) {
-            updateFields.gender = updateFields.gender.toUpperCase();
+        // Handle date fields
+        if (fieldsToUpdate.dob) {
+            fieldsToUpdate.dob = new Date(fieldsToUpdate.dob);
         }
-
-        // Handle date fields safely
-        if (updateFields.dob) {
-            const dobDate = new Date(updateFields.dob);
-            if (isNaN(dobDate.getTime())) {
-                delete updateFields.dob; // Remove invalid date
-            } else {
-                updateFields.dob = dobDate;
-            }
-        }
-
-        if (updateFields.admissionDate) {
-            const admissionDate = new Date(updateFields.admissionDate);
-            if (isNaN(admissionDate.getTime())) {
-                delete updateFields.admissionDate; // Remove invalid date
-            } else {
-                updateFields.admissionDate = admissionDate;
-            }
-        }
-
-        // First, get the current student to find linked parent
-        const currentStudent = await Student.findById(id);
-        if (!currentStudent) {
-            return NextResponse.json(
-                { message: 'Student not found' },
-                { status: 404 }
-            );
-        }
-
-        // Update parent information if provided
-        if (currentStudent.linkedParentId && (parentName || parentEmail || parentPhone || parentAlternativePhone)) {
-            try {
-                const parentUpdateData: any = {};
-                if (parentName) parentUpdateData.name = parentName;
-                if (parentEmail) parentUpdateData.email = parentEmail;
-                if (parentPhone) {
-                    parentUpdateData.phone = parentPhone;
-                    // Also update password (phone is used as password for parents)
-                    parentUpdateData.password = await bcrypt.hash(parentPhone, 12);
-                }
-                if (parentAlternativePhone !== undefined) parentUpdateData.alternativePhone = parentAlternativePhone;
-
-                await User.findByIdAndUpdate(
-                    currentStudent.linkedParentId,
-                    parentUpdateData,
-                    { runValidators: true }
-                );
-            } catch (parentError) {
-                console.error('Error updating parent:', parentError);
-                // Continue with student update even if parent update fails
-            }
+        if (fieldsToUpdate.admissionDate) {
+            fieldsToUpdate.admissionDate = new Date(fieldsToUpdate.admissionDate);
         }
 
         // Update the student
         const updatedStudent = await Student.findByIdAndUpdate(
             id,
-            updateFields,
+            fieldsToUpdate,
             { new: true, runValidators: true }
         ).populate('linkedParentId', 'name email phone alternativePhone');
 
@@ -264,9 +266,8 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         return NextResponse.json({ student: formattedStudent });
     } catch (error: any) {
         console.error('Update student error:', error);
-        console.error('Error stack:', error.stack);
         return NextResponse.json(
-            { message: 'Internal server error', error: error.message, details: error.toString() },
+            { message: 'Internal server error', error: error.message },
             { status: 500 }
         );
     }

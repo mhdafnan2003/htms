@@ -17,9 +17,7 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
-  PieChart,
-  Pie,
-  Cell,
+
   LineChart,
   Line,
   ResponsiveContainer
@@ -37,7 +35,7 @@ interface DashboardStats {
   feeChartData?: Array<{ month: string; collected: number; pending: number }>;
 }
 
-const COLORS = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
@@ -65,9 +63,7 @@ export default function AdminDashboard() {
     { month: 'Jan', collected: 0, pending: 0 }
   ];
 
-  const classDistribution = stats.classDistribution?.length ? stats.classDistribution : [
-    { name: 'No Data', value: 100, count: 0 }
-  ];
+
 
   useEffect(() => {
     // Fetch dashboard statistics
@@ -243,58 +239,7 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Bottom Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Class Distribution */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Class Distribution</h3>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie
-                  data={classDistribution}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, value }) => `${name}: ${value}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {classDistribution.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
 
-          {/* Recent Activities */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 lg:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activities</h3>
-            <div className="space-y-4">
-              {[
-                { time: '2 hours ago', activity: 'New student admission: Rahul Sharma (Class 8)', type: 'admission' },
-                { time: '4 hours ago', activity: 'Fee payment received: ₹2,500 from Priya Singh', type: 'payment' },
-                { time: '6 hours ago', activity: 'Attendance marked for 42 students', type: 'attendance' },
-                { time: '1 day ago', activity: 'Exam marks added for Mathematics - Class 10', type: 'marks' },
-                { time: '2 days ago', activity: 'Monthly fee report generated', type: 'report' }
-              ].map((activity, index) => (
-                <div key={index} className="flex items-start space-x-3 pb-3 border-b border-gray-100 last:border-b-0">
-                  <div className={`w-2 h-2 rounded-full mt-2 ${activity.type === 'admission' ? 'bg-blue-500' :
-                    activity.type === 'payment' ? 'bg-green-500' :
-                      activity.type === 'attendance' ? 'bg-yellow-500' :
-                        activity.type === 'marks' ? 'bg-purple-500' : 'bg-gray-500'
-                    }`}></div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900">{activity.activity}</p>
-                    <p className="text-xs text-gray-500 mt-1">{activity.time}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
       </div>
     </AdminLayout>
   );

@@ -38,12 +38,15 @@ export default function CollectFeesPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState<string>('all');
   const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    return new Date().getMonth() + 1; // 1-12
+  });
+  const [selectedYear, setSelectedYear] = useState(() => {
+    return new Date().getFullYear();
   });
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentFee | null>(null);
+  const [systemSettings, setSystemSettings] = useState<any>(null);
   const [paymentData, setPaymentData] = useState<FeePayment>({
     studentId: '',
     month: '',
@@ -68,6 +71,32 @@ export default function CollectFeesPage() {
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
+
+  const years = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+  }, []);
+
+  // Fetch system settings
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/admin/settings/system', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setSystemSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      }
+    };
+    fetchSettings();
+  }, []);
 
   // Get unique classes from students
   useEffect(() => {
@@ -113,13 +142,14 @@ export default function CollectFeesPage() {
 
   useEffect(() => {
     fetchFeeStatus();
-  }, [selectedMonth]);
+  }, [selectedMonth, selectedYear]);
 
   const fetchFeeStatus = async () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/fees/status?month=${selectedMonth}`, {
+      const monthValue = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+      const response = await fetch(`/api/fees/status?month=${monthValue}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
 
@@ -136,9 +166,10 @@ export default function CollectFeesPage() {
 
   const openPaymentForm = (student: StudentFee) => {
     setSelectedStudent(student);
+    const monthValue = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
     setPaymentData({
       studentId: student._id,
-      month: selectedMonth,
+      month: monthValue,
       paidAmount: student.balanceAmount,
       paymentDate: new Date().toISOString().split('T')[0],
       paymentMethod: 'Cash',
@@ -165,7 +196,9 @@ export default function CollectFeesPage() {
 
       if (response.ok) {
         const result = await response.json();
+        
         alert(`Payment processed successfully! Receipt Number: ${result.receiptNumber}`);
+        
         setShowPaymentForm(false);
         setSelectedStudent(null);
         fetchFeeStatus(); // Refresh data
@@ -181,9 +214,215 @@ export default function CollectFeesPage() {
     }
   };
 
-  const getMonthName = (monthValue: string) => {
-    const [year, month] = monthValue.split('-');
-    return `${months[parseInt(month) - 1]} ${year}`;
+  const downloadReceipt = (student: StudentFee) => {
+    const receiptWindow = window.open('', '_blank');
+    if (!receiptWindow) {
+      alert('Please allow popups to download receipt');
+      return;
+    }
+
+    const institutionName = systemSettings?.schoolName || 'STUDENT TUITION MANAGEMENT';
+    const logoUrl = systemSettings?.logoUrl || '';
+    const receiptNumber = `RCP-${student.studentId}-${selectedYear}${String(selectedMonth).padStart(2, '0')}`;
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Fee Receipt - ${receiptNumber}</title>
+        <style>
+          body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          .receipt-container {
+            border: 2px solid #333;
+            padding: 30px;
+          }
+          .header {
+            text-align: center;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+          }
+          .header-content {
+            flex: 1;
+          }
+          .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+          }
+          .logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 50%;
+          }
+          .header h1 {
+            margin: 0;
+            color: #2563eb;
+          }
+          .header h2 {
+            margin: 5px 0 0 0;
+            color: #1e40af;
+          }
+          .receipt-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+          }
+          .info-section {
+            flex: 1;
+          }
+          .info-label {
+            font-weight: bold;
+            color: #555;
+          }
+          .info-value {
+            margin-bottom: 10px;
+          }
+          .payment-details {
+            margin: 30px 0;
+            border: 1px solid #ddd;
+            padding: 20px;
+            background-color: #f9fafb;
+          }
+          .amount-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #ddd;
+          }
+          .total-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px 0;
+            font-size: 1.2em;
+            font-weight: bold;
+            border-top: 2px solid #333;
+            margin-top: 10px;
+          }
+          .footer {
+            margin-top: 40px;
+            text-align: center;
+            border-top: 2px solid #333;
+            padding-top: 20px;
+          }
+          .print-button {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 20px 0;
+          }
+          @media print {
+            .print-button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt-container">
+          <div class="header">
+            <div class="logo">
+              ${logoUrl ? `<img src="${logoUrl}" alt="Logo" />` : `
+              <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M30 10L35 20H25L30 10Z" fill="white"/>
+                <rect x="20" y="20" width="20" height="25" fill="white"/>
+                <path d="M15 45H45L40 50H20L15 45Z" fill="white"/>
+                <circle cx="30" cy="32" r="4" fill="#2563eb"/>
+              </svg>
+              `}
+            </div>
+            <div class="header-content">
+              <h1>${institutionName}</h1>
+              <h2>FEE RECEIPT</h2>
+            </div>
+          </div>
+
+          <div class="receipt-info">
+            <div class="info-section">
+              <div class="info-value">
+                <span class="info-label">Receipt No:</span> ${receiptNumber}
+              </div>
+              <div class="info-value">
+                <span class="info-label">Receipt Date:</span> ${student.lastPaymentDate ? new Date(student.lastPaymentDate).toLocaleDateString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                }) : new Date().toLocaleDateString('en-IN', { 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </div>
+            </div>
+
+            <div class="info-section">
+              <div class="info-value">
+                <span class="info-label">Student Name:</span> ${student.fullName}
+              </div>
+              <div style="display: flex; gap: 30px;">
+                <div class="info-value" style="flex: 1;">
+                  <span class="info-label">Phone:</span> ${student.parentPhone}
+                </div>
+                <div class="info-value" style="flex: 1;">
+                  <span class="info-label">Class:</span> ${student.classGrade}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="payment-details">
+            <h3 style="margin-top: 0;">Payment Details</h3>
+            <div class="amount-row">
+              <span>Fee for ${getMonthName()}</span>
+              <span>₹${student.monthlyFeeAmount.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="amount-row">
+              <span>Amount Paid</span>
+              <span>₹${student.paidAmount.toLocaleString('en-IN')}</span>
+            </div>
+            <div class="total-row">
+              <span>Total Paid</span>
+              <span>₹${student.paidAmount.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p><strong>Thank you for your payment!</strong></p>
+          </div>
+        </div>
+
+        <div style="text-align: center;">
+          <button class="print-button" onclick="window.print()">Print Receipt</button>
+        </div>
+      </body>
+      </html>
+    `;
+
+    receiptWindow.document.write(receiptHTML);
+    receiptWindow.document.close();
+  };
+
+  const getMonthName = () => {
+    return `${months[selectedMonth - 1]} ${selectedYear}`;
   };
 
   const getStatusBadge = (status: string) => {
@@ -287,16 +526,26 @@ export default function CollectFeesPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
               <select
                 value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
+                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                 className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
               >
-                {Array.from({ length: 12 }, (_, i) => {
-                  const date = new Date();
-                  date.setMonth(date.getMonth() - 6 + i);
-                  const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                  const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                  return <option key={value} value={value}>{label}</option>;
-                })}
+                {months.map((month, idx) => (
+                  <option key={idx + 1} value={idx + 1}>{month}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Year Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+              >
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
               </select>
             </div>
 
@@ -321,7 +570,7 @@ export default function CollectFeesPage() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-semibold text-gray-900">
-              Students ({filteredStudents.length}) - {getMonthName(selectedMonth)}
+              Students ({filteredStudents.length}) - {getMonthName()}
             </h2>
           </div>
 
@@ -378,7 +627,13 @@ export default function CollectFeesPage() {
                             Collect
                           </button>
                         ) : (
-                          <span className="text-gray-400 text-sm">Completed</span>
+                          <button
+                            onClick={() => downloadReceipt(student)}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600"
+                          >
+                            <ReceiptIcon style={{ fontSize: 16 }} />
+                            Receipt
+                          </button>
                         )}
                       </td>
                     </tr>

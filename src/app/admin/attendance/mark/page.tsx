@@ -212,8 +212,9 @@ export default function MarkAttendancePage() {
 
   const openEditModal = (student: Student, day: number) => {
     const cell = attendanceMap[student._id]?.[day];
-    setManualIn(cell?.entryTime || '');
-    setManualOut(cell?.exitTime || '');
+    const currentTime = getCurrentTime();
+    setManualIn(cell?.entryTime || currentTime);
+    setManualOut(cell?.exitTime || currentTime);
     setEditModal({
       studentId: student._id,
       studentName: student.fullName,
@@ -263,6 +264,15 @@ export default function MarkAttendancePage() {
   const getCurrentTime = () => {
     const now = new Date();
     return now.toTimeString().slice(0, 5); // "HH:MM"
+  };
+
+  const convertTo12Hour = (time24: string) => {
+    if (!time24) return '';
+    const [hours, minutes] = time24.split(':');
+    const hour = parseInt(hours);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 || 12;
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
   const saveAttendance = async () => {
@@ -516,7 +526,7 @@ export default function MarkAttendancePage() {
                                       : 'text-gray-400 hover:bg-green-100'
                                     }`}
                                 >
-                                  {cell?.entryTime || (inPending ? '✓' : 'IN')}
+                                  {cell?.entryTime ? convertTo12Hour(cell.entryTime) : (inPending ? '✓' : 'IN')}
                                 </button>
                               </td>
 
@@ -533,7 +543,7 @@ export default function MarkAttendancePage() {
                                       : 'text-gray-400 hover:bg-red-100'
                                     }`}
                                 >
-                                  {cell?.exitTime || (outPending ? '✓' : 'OUT')}
+                                  {cell?.exitTime ? convertTo12Hour(cell.exitTime) : (outPending ? '✓' : 'OUT')}
                                 </button>
 
                                 {/* Edit Icon */}
@@ -580,24 +590,38 @@ export default function MarkAttendancePage() {
 
               {/* Manual IN Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Manual IN Time</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  IN Time <span className="text-xs text-gray-500">(Current: {convertTo12Hour(getCurrentTime())})</span>
+                </label>
                 <input
                   type="time"
                   value={manualIn}
                   onChange={(e) => setManualIn(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                 />
+                {manualIn && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    Will be saved as: {convertTo12Hour(manualIn)}
+                  </div>
+                )}
               </div>
 
               {/* Manual OUT Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Manual OUT Time</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  OUT Time <span className="text-xs text-gray-500">(Current: {convertTo12Hour(getCurrentTime())})</span>
+                </label>
                 <input
                   type="time"
                   value={manualOut}
                   onChange={(e) => setManualOut(e.target.value)}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                 />
+                {manualOut && (
+                  <div className="text-xs text-gray-600 mt-1">
+                    Will be saved as: {convertTo12Hour(manualOut)}
+                  </div>
+                )}
               </div>
 
               {/* Apply Manual Times */}

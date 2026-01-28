@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useLanguage } from '@/contexts/LanguageContext';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import PeopleIcon from '@mui/icons-material/People';
 import SchoolIcon from '@mui/icons-material/School';
@@ -15,66 +16,6 @@ import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import HomeIcon from '@mui/icons-material/Home';
 
-const menuItems = [
-  {
-    icon: <DashboardIcon />,
-    label: 'Dashboard',
-    href: '/admin',
-    key: 'dashboard'
-  },
-  {
-    icon: <HomeIcon />,
-    label: 'Admission',
-    key: 'admission',
-    href: '/admin/admission/list'
-  },
-  {
-    icon: <SchoolIcon />,
-    label: 'Student',
-    key: 'student',
-    href: '/admin/students'
-  },
-  {
-    icon: <CalendarIcon />,
-    label: 'Attendance',
-    key: 'attendance',
-    children: [
-      { label: 'Mark Attendance', href: '/admin/attendance/mark' },
-      { label: 'View Attendance', href: '/admin/attendance/view' },
-      { label: 'Attendance Report', href: '/admin/attendance/report' }
-    ]
-  },
-  {
-    icon: <PaymentIcon />,
-    label: 'Fees',
-    key: 'fees',
-    children: [
-      { label: 'Collect Fees', href: '/admin/fees/collect' },
-      { label: 'Fee History', href: '/admin/fees/history' },
-      { label: 'Fee Report', href: '/admin/fees/report' }
-    ]
-  },
-  {
-    icon: <AssessmentIcon />,
-    label: 'Exam/Mark',
-    key: 'exam',
-    children: [
-      { label: 'Exams & Marks', href: '/admin/marks' },
-      { label: 'View Results', href: '/admin/marks/results' },
-      { label: 'Progress Report', href: '/admin/marks/report' }
-    ]
-  },
-  {
-    icon: <SettingsIcon />,
-    label: 'Settings',
-    key: 'settings',
-    children: [
-      { label: 'Profile Settings', href: '/admin/settings/profile' },
-      { label: 'System Settings', href: '/admin/settings/system' }
-    ]
-  }
-];
-
 interface AdminSidebarProps {
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
@@ -85,6 +26,67 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ collapsed, setCollapsed, mobileOpen, setMobileOpen }: AdminSidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const pathname = usePathname();
+  const { t, isRTL } = useLanguage();
+
+  // Menu items with translations
+  const menuItems = [
+    {
+      icon: <DashboardIcon />,
+      label: t.dashboard,
+      href: '/admin',
+      key: 'dashboard'
+    },
+    {
+      icon: <HomeIcon />,
+      label: t.admission,
+      key: 'admission',
+      href: '/admin/admission/list'
+    },
+    {
+      icon: <SchoolIcon />,
+      label: t.students,
+      key: 'student',
+      href: '/admin/students'
+    },
+    {
+      icon: <CalendarIcon />,
+      label: t.attendance,
+      key: 'attendance',
+      children: [
+        { label: t.markAttendance, href: '/admin/attendance/mark' },
+        { label: t.viewAttendance, href: '/admin/attendance/view' },
+        { label: t.attendanceReport, href: '/admin/attendance/report' }
+      ]
+    },
+    {
+      icon: <PaymentIcon />,
+      label: t.fees,
+      key: 'fees',
+      children: [
+        { label: t.collectFees, href: '/admin/fees/collect' },
+        { label: t.feeReport, href: '/admin/fees/report' }
+      ]
+    },
+    {
+      icon: <AssessmentIcon />,
+      label: t.exams,
+      key: 'exam',
+      children: [
+        { label: t.examMarks, href: '/admin/marks' },
+        { label: t.viewResults, href: '/admin/marks/results' },
+        { label: t.progressReport, href: '/admin/marks/report' }
+      ]
+    },
+    {
+      icon: <SettingsIcon />,
+      label: t.settings,
+      key: 'settings',
+      children: [
+        { label: t.profileSettings, href: '/admin/settings/profile' },
+        { label: 'System Settings', href: '/admin/settings/system' }
+      ]
+    }
+  ];
 
   const toggleExpanded = (key: string) => {
     if (collapsed) return; // Don't expand if sidebar is collapsed

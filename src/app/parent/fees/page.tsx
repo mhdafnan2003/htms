@@ -131,7 +131,7 @@ export default function ParentFeesPage() {
                         </div>
 
                         {/* Summary Cards */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-white rounded-lg shadow-sm border border-green-200 p-4">
                                 <p className="text-sm text-green-600">Total Paid</p>
                                 <p className="text-2xl font-bold text-green-600">{formatCurrency(summary.totalPaid)}</p>
@@ -143,14 +143,6 @@ export default function ParentFeesPage() {
                             <div className="bg-white rounded-lg shadow-sm border border-purple-200 p-4">
                                 <p className="text-sm text-purple-600">Total Discount</p>
                                 <p className="text-2xl font-bold text-purple-600">{formatCurrency(summary.totalDiscount)}</p>
-                            </div>
-                            <div className="bg-white rounded-lg shadow-sm border border-blue-200 p-4">
-                                <p className="text-sm text-blue-600">Months Paid/Pending</p>
-                                <p className="text-2xl font-bold text-blue-600">
-                                    <span className="text-green-600">{summary.paidMonths}</span>
-                                    {' / '}
-                                    <span className="text-red-600">{summary.pendingMonths}</span>
-                                </p>
                             </div>
                         </div>
 

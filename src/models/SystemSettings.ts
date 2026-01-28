@@ -6,6 +6,7 @@ export interface ISystemSettings extends Document {
     email: string;
     phone: string;
     website?: string;
+    logoUrl?: string;
     currentSession: string; // e.g., "2023-2024"
     currencySymbol: string;
     updatedAt: Date;
@@ -33,6 +34,7 @@ const SystemSettingsSchema = new Schema<ISystemSettings>({
         default: '9876543210'
     },
     website: String,
+    logoUrl: String,
     currentSession: {
         type: String,
         required: true,

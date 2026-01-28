@@ -23,9 +23,12 @@ export default function SystemSettings() {
         email: '',
         phone: '',
         website: '',
+        logoUrl: '',
         currentSession: '',
         currencySymbol: '₹'
     });
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string>('');
 
     useEffect(() => {
         fetchSettings();
@@ -48,9 +51,13 @@ export default function SystemSettings() {
                     email: data.email || '',
                     phone: data.phone || '',
                     website: data.website || '',
+                    logoUrl: data.logoUrl || '',
                     currentSession: data.currentSession || '',
                     currencySymbol: data.currencySymbol || '₹'
                 });
+                if (data.logoUrl) {
+                    setLogoPreview(data.logoUrl);
+                }
             }
         } catch (error) {
             console.error('Error fetching settings:', error);
@@ -67,6 +74,28 @@ export default function SystemSettings() {
         }));
     };
 
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            if (file.type.startsWith('image/')) {
+                setLogoFile(file);
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    setLogoPreview(reader.result as string);
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert('Please select an image file');
+            }
+        }
+    };
+
+    const removeLogo = () => {
+        setLogoFile(null);
+        setLogoPreview('');
+        setFormData(prev => ({ ...prev, logoUrl: '' }));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -74,13 +103,24 @@ export default function SystemSettings() {
 
         try {
             const token = localStorage.getItem('token');
+            const formDataToSend = new FormData();
+            
+            // Append all form fields
+            Object.entries(formData).forEach(([key, value]) => {
+                formDataToSend.append(key, value);
+            });
+            
+            // Append logo file if selected
+            if (logoFile) {
+                formDataToSend.append('logo', logoFile);
+            }
+
             const response = await fetch('/api/admin/settings/system', {
                 method: 'PUT',
                 headers: {
-                    'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify(formData)
+                body: formDataToSend
             });
 
             const data = await response.json();
@@ -90,6 +130,12 @@ export default function SystemSettings() {
             }
 
             setMessage({ type: 'success', text: 'System settings updated successfully' });
+            
+            if (data.settings?.logoUrl) {
+                setFormData(prev => ({ ...prev, logoUrl: data.settings.logoUrl }));
+                setLogoPreview(data.settings.logoUrl);
+            }
+            setLogoFile(null);
 
         } catch (error: any) {
             setMessage({ type: 'error', text: error.message });
@@ -212,6 +258,50 @@ export default function SystemSettings() {
                                             placeholder="https://..."
                                             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                         />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Institution Logo (for receipts)
+                                        </label>
+                                        {logoPreview ? (
+                                            <div className="flex items-center gap-4 p-4 border border-gray-300 rounded-lg bg-gray-50">
+                                                <img 
+                                                    src={logoPreview} 
+                                                    alt="Logo Preview" 
+                                                    className="w-24 h-24 object-contain border border-gray-200 rounded-lg bg-white"
+                                                />
+                                                <div className="flex-1">
+                                                    <p className="text-sm text-gray-700 font-medium">Current Logo</p>
+                                                    <p className="text-xs text-gray-500 mt-1">This logo will appear on fee receipts</p>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={removeLogo}
+                                                    className="px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 border border-red-200 rounded-lg transition-colors"
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                                                <input
+                                                    type="file"
+                                                    id="logoUpload"
+                                                    accept="image/*"
+                                                    onChange={handleLogoChange}
+                                                    className="hidden"
+                                                />
+                                                <label htmlFor="logoUpload" className="cursor-pointer">
+                                                    <div className="text-gray-400 mb-2">
+                                                        <svg className="mx-auto h-12 w-12" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                        </svg>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600">Click to upload logo</p>
+                                                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 2MB</p>
+                                                </label>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

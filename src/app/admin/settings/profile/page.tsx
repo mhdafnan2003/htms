@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage, languageNames, Language } from '@/contexts/LanguageContext';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
 import SaveIcon from '@mui/icons-material/Save';
@@ -16,6 +17,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 
 export default function ProfileSettings() {
     const { user, refreshUser } = useAuth();
+    const { language: currentLanguage, setLanguage, t } = useLanguage();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState({ type: '', text: '' });
@@ -62,13 +64,15 @@ export default function ProfileSettings() {
                     profilePhoto: userData.profilePhoto || ''
                 });
 
-                if (userData.preferences) {
-                    setPreferences({
-                        theme: userData.preferences.theme || 'light',
-                        language: userData.preferences.language || 'en',
-                        notifications: userData.preferences.notifications !== undefined ? userData.preferences.notifications : true
-                    });
-                }
+                // Use localStorage values as source of truth (they may have been changed during this session)
+                const savedTheme = localStorage.getItem('theme') || userData.preferences?.theme || 'light';
+                const savedLanguage = localStorage.getItem('language') || userData.preferences?.language || 'en';
+
+                setPreferences({
+                    theme: savedTheme,
+                    language: savedLanguage,
+                    notifications: userData.preferences?.notifications !== undefined ? userData.preferences.notifications : true
+                });
             }
         } catch (error) {
             console.error('Error fetching profile:', error);
@@ -89,6 +93,21 @@ export default function ProfileSettings() {
 
     const handlePreferenceChange = (name: string, value: any) => {
         setPreferences(prev => ({ ...prev, [name]: value }));
+
+        // Immediately apply theme change for instant feedback and persist to localStorage
+        if (name === 'theme') {
+            localStorage.setItem('theme', value);
+            if (value === 'dark') {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        }
+
+        // Immediately apply language change
+        if (name === 'language') {
+            setLanguage(value as Language);
+        }
     };
 
     const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,10 +368,10 @@ export default function ProfileSettings() {
                                 onChange={(e) => handlePreferenceChange('language', e.target.value)}
                                 className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                                <option value="en">English</option>
-                                <option value="es">Spanish</option>
-                                <option value="fr">French</option>
-                                <option value="hi">Hindi</option>
+                                <option value="en">{languageNames.en}</option>
+                                <option value="ar">{languageNames.ar}</option>
+                                <option value="hi">{languageNames.hi}</option>
+                                <option value="ml">{languageNames.ml}</option>
                             </select>
                         </div>
 

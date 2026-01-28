@@ -8,6 +8,7 @@ interface AuthContextType {
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     logout: () => void;
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,6 +25,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (storedUser && token) {
             try {
                 setUser(JSON.parse(storedUser));
+                // Optionally refresh in background
+                refreshUserInternal(token);
             } catch (error) {
                 console.error('Failed to parse stored user:', error);
                 localStorage.removeItem('user');
@@ -32,6 +35,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
         setLoading(false);
     }, []);
+
+    const refreshUserInternal = async (token: string) => {
+        try {
+            // Try admin profile first
+            const response = await fetch('/api/admin/profile', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const userData = data.user;
+                localStorage.setItem('user', JSON.stringify(userData));
+                setUser(userData);
+            }
+        } catch (error) {
+            console.error('Failed to refresh user:', error);
+        }
+    };
+
+    const refreshUser = async () => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            await refreshUserInternal(token);
+        }
+    };
 
     const login = async (email: string, password: string) => {
         try {
@@ -66,11 +94,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
             {children}
         </AuthContext.Provider>
     );
 };
+
+
 
 export const useAuth = () => {
     const context = useContext(AuthContext);

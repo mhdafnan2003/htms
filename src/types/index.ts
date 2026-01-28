@@ -4,6 +4,11 @@ export interface User {
     name: string;
     role: 'ADMIN' | 'PARENT';
     phone: string;
+    preferences?: {
+        theme: 'light' | 'dark';
+        language: string;
+        notifications: boolean;
+    };
 }
 
 export interface AuthResponse {
