@@ -44,7 +44,7 @@ async function updateSystemSettings(req: NextRequest) {
         // Handle FormData (with file upload)
         if (contentType.includes('multipart/form-data')) {
             const formData = await req.formData();
-            
+
             // Extract regular fields
             for (const [key, value] of formData.entries()) {
                 if (key === 'logo' && value instanceof File) {
@@ -56,9 +56,9 @@ async function updateSystemSettings(req: NextRequest) {
 
             // Handle logo file upload
             if (logoFile) {
-                const savedFiles = await saveFiles([logoFile], 'logo');
+                const savedFiles = await saveFiles([logoFile]);
                 if (savedFiles.length > 0) {
-                    updateData.logoUrl = savedFiles[0];
+                    updateData.logoUrl = savedFiles[0].url;
                 }
             }
         } else {

@@ -61,7 +61,7 @@ async function getAttendanceSummary(req: NextRequest, context: any, user: any) {
         const workingDays = totalDays - holidayCount;
         const attendancePercentage = workingDays > 0
             ? ((presentCount + lateCount) / workingDays * 100).toFixed(2)
-            : 0;
+            : '0';
 
         // If querying by class, get student-wise breakdown
         let studentSummaries = null;
@@ -84,7 +84,7 @@ async function getAttendanceSummary(req: NextRequest, context: any, user: any) {
                 const sWorking = sTotal - sHoliday;
                 const sPercentage = sWorking > 0
                     ? ((sPresent + sLate) / sWorking * 100).toFixed(2)
-                    : 0;
+                    : '0';
 
                 return {
                     studentId: student._id,
@@ -109,7 +109,7 @@ async function getAttendanceSummary(req: NextRequest, context: any, user: any) {
                 lateDays: lateCount,
                 holidayDays: holidayCount,
                 workingDays,
-                attendancePercentage: parseFloat(attendancePercentage as string)
+                attendancePercentage: parseFloat(attendancePercentage)
             },
             studentSummaries,
             query: {

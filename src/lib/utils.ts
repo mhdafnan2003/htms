@@ -10,7 +10,9 @@ export interface JWTPayload {
 }
 
 export function signToken(payload: JWTPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '7d' });
+  return jwt.sign({ ...payload }, JWT_SECRET, {
+    expiresIn: (process.env.JWT_EXPIRE || '7d') as any
+  });
 }
 
 export function verifyToken(token: string): JWTPayload {
@@ -29,7 +31,7 @@ export function generateId(prefix: string, lastId?: string): string {
   if (!lastId) {
     return `${prefix}-0001`;
   }
-  
+
   const lastNumber = parseInt(lastId.split('-')[1]);
   const nextNumber = lastNumber + 1;
   return `${prefix}-${nextNumber.toString().padStart(4, '0')}`;

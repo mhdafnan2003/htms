@@ -29,6 +29,7 @@ interface Student {
     section?: string;
     rollNumber?: string;
     subjects: string[];
+    subjectsEnrolled?: string[];
     phone: string;
     email?: string;
     address: string;
@@ -194,8 +195,8 @@ export default function StudentProfile() {
                             <p className="text-gray-600 mt-1">Student ID: {student.studentId}</p>
                             <div className="flex items-center gap-4 mt-2">
                                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${student.status === 'ACTIVE'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-red-100 text-red-800'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-800'
                                     }`}>
                                     {student.status}
                                 </span>
@@ -410,7 +411,7 @@ export default function StudentProfile() {
                                 const isImage = doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif)$/);
                                 const fileType = isPdf ? 'PDF' : isImage ? 'IMG' : 'DOC';
                                 const bgColor = isPdf ? 'bg-red-100 text-red-600' : isImage ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600';
-                                
+
                                 return (
                                     <div key={index} className="flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-blue-300 transition-colors">
                                         <div className="flex items-center gap-3 mb-3">

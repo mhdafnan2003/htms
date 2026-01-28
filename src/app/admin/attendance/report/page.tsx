@@ -147,7 +147,7 @@ export default function AttendanceReportPage() {
 
             if (response.ok) {
                 const data = await response.json();
-                const uniqueClasses = [...new Set(data.students.map((s: Student) => s.classGrade))];
+                const uniqueClasses = [...new Set(data.students.map((s: Student) => s.classGrade))] as string[];
                 setClasses(uniqueClasses.sort());
                 if (uniqueClasses.length > 0 && !selectedClass) {
                     setSelectedClass(uniqueClasses[0]);

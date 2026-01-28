@@ -196,9 +196,9 @@ export default function CollectFeesPage() {
 
       if (response.ok) {
         const result = await response.json();
-        
+
         alert(`Payment processed successfully! Receipt Number: ${result.receiptNumber}`);
-        
+
         setShowPaymentForm(false);
         setSelectedStudent(null);
         fetchFeeStatus(); // Refresh data
@@ -362,15 +362,15 @@ export default function CollectFeesPage() {
                 <span class="info-label">Receipt No:</span> ${receiptNumber}
               </div>
               <div class="info-value">
-                <span class="info-label">Receipt Date:</span> ${student.lastPaymentDate ? new Date(student.lastPaymentDate).toLocaleDateString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                }) : new Date().toLocaleDateString('en-IN', { 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
+                <span class="info-label">Receipt Date:</span> ${student.lastPaymentDate ? new Date(student.lastPaymentDate).toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }) : new Date().toLocaleDateString('en-IN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}
               </div>
             </div>
 
@@ -668,7 +668,7 @@ export default function CollectFeesPage() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <p className="font-medium text-gray-900">{selectedStudent.fullName}</p>
                   <p className="text-sm text-gray-600">ID: {selectedStudent.studentId} | Class: {selectedStudent.classGrade}</p>
-                  <p className="text-sm text-gray-600">Month: {getMonthName(selectedMonth)}</p>
+                  <p className="text-sm text-gray-600">Month: {getMonthName()}</p>
                   <div className="mt-2 flex justify-between text-sm">
                     <span>Total Fee: ₹{selectedStudent.monthlyFeeAmount.toLocaleString('en-IN')}</span>
                     <span className="text-red-600">Balance: ₹{selectedStudent.balanceAmount.toLocaleString('en-IN')}</span>

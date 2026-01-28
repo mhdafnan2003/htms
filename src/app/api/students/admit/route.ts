@@ -74,7 +74,7 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
         const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
         // Save uploaded files to disk
-        let documents = [];
+        let documents: any[] = [];
         if (files.length > 0) {
             try {
                 documents = await saveFiles(files);
