@@ -17,7 +17,6 @@ async function getSystemSettings(req: NextRequest) {
                 schoolName: 'Student Tuition Center',
                 address: 'Main Street, City',
                 email: 'admin@tuition.com',
-                phone: '',
                 currentSession: new Date().getFullYear().toString(),
                 currencySymbol: '₹'
             });
@@ -73,7 +72,8 @@ async function updateSystemSettings(req: NextRequest) {
             {
                 new: true, // Return updated doc
                 upsert: true, // Create if doesn't exist
-                setDefaultsOnInsert: true
+                setDefaultsOnInsert: true,
+                runValidators: true
             }
         );
 
