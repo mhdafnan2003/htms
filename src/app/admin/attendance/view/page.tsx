@@ -209,6 +209,15 @@ export default function ViewAttendancePage() {
         }
     };
 
+    const convertTo12Hour = (time24: string) => {
+        if (!time24) return '';
+        const [hours, minutes] = time24.split(':');
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+    };
+
     if (loading && students.length === 0) {
         return (
             <AdminLayout title="View Attendance">
@@ -402,7 +411,7 @@ export default function ViewAttendancePage() {
                                                         <td
                                                             key={day}
                                                             className={`px-1 py-2 text-center border-r border-gray-200 ${display.bg} min-w-[70px]`}
-                                                            title={record?.remarks || (record?.entryTime ? `IN: ${record.entryTime} | OUT: ${record.exitTime || '-'}` : '')}
+                                                            title={record?.remarks || (record?.entryTime ? `IN: ${convertTo12Hour(record.entryTime)} | OUT: ${record.exitTime ? convertTo12Hour(record.exitTime) : '-'}` : '')}
                                                         >
                                                             <div className="flex flex-col items-center">
                                                                 <span className={`text-sm font-bold ${display.color}`}>
@@ -413,11 +422,11 @@ export default function ViewAttendancePage() {
                                                                 {(record?.status === 'P' || record?.status === 'L') && record.entryTime && (
                                                                     <div className="flex flex-col text-[10px] leading-tight mt-1">
                                                                         <span className="text-green-700 whitespace-nowrap">
-                                                                            In: {record.entryTime}
+                                                                            In: {convertTo12Hour(record.entryTime)}
                                                                         </span>
                                                                         {record.exitTime && (
                                                                             <span className="text-orange-700 whitespace-nowrap">
-                                                                                Out: {record.exitTime}
+                                                                                Out: {convertTo12Hour(record.exitTime)}
                                                                             </span>
                                                                         )}
                                                                     </div>

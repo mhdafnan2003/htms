@@ -282,7 +282,7 @@ export default function AddMarksPage() {
                                 <tr>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">#</th>
                                     <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Student</th>
-                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900">Section</th>
+                                    <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900" style={{display: 'none'}}>Section</th>
                                     <th className="px-4 py-3 text-center text-sm font-semibold text-gray-900">
                                         Marks (out of {exam.totalMarks})
                                     </th>
@@ -306,7 +306,7 @@ export default function AddMarksPage() {
                                                     <p className="text-xs text-gray-500">{student.studentCode}</p>
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-700">{student.section || '-'}</td>
+                                            <td className="px-4 py-3 text-gray-700" style={{display: 'none'}}>{student.section || '-'}</td>
                                             <td className="px-4 py-3">
                                                 <input
                                                     type="number"

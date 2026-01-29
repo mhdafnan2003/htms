@@ -216,7 +216,7 @@ export default function AdmissionList() {
                                                 <div className="text-sm font-medium text-gray-900">{student.fullName}</div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                                Class {student.class} {student.section && `- ${student.section}`}
+                                                Class {student.class} {false && student.section && `- ${student.section}`}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                 {student.parentName || '-'}

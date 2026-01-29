@@ -309,44 +309,40 @@ export default function NewAdmission() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        City <span className="text-red-500">*</span>
+                                        City
                                     </label>
                                     <input
                                         type="text"
                                         name="city"
                                         value={formData.city}
                                         onChange={handleChange}
-                                        required
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        State <span className="text-red-500">*</span>
+                                        State
                                     </label>
                                     <input
                                         type="text"
                                         name="state"
                                         value={formData.state}
                                         onChange={handleChange}
-                                        required
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Pincode <span className="text-red-500">*</span>
+                                        Pincode
                                     </label>
                                     <input
                                         type="text"
                                         name="pincode"
                                         value={formData.pincode}
                                         onChange={handleChange}
-                                        required
-                                        pattern="[0-9]{6}"
-                                        placeholder="6-digit pincode"
+                                        placeholder="Enter pincode"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
@@ -461,7 +457,7 @@ export default function NewAdmission() {
                                     </select>
                                 </div>
 
-                                <div>
+                                <div style={{display: 'none'}}>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Section
                                     </label>

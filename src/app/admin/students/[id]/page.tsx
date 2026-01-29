@@ -351,7 +351,7 @@ export default function StudentProfile() {
                                 label="Class"
                                 value={`Class ${student.class}`}
                             />
-                            {student.section && (
+                            {false && student.section && (
                                 <InfoCard
                                     icon={<SchoolIcon fontSize="small" />}
                                     label="Section"

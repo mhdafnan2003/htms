@@ -141,7 +141,7 @@ export default function ParentInfoPage() {
                   <p className="text-sm text-gray-500">Class</p>
                   <p className="font-semibold text-gray-900">
                     {student.classGrade}
-                    {student.section && ` - Section ${student.section}`}
+                    {false && student.section && ` - Section ${student.section}`}
                   </p>
                 </div>
               </div>
