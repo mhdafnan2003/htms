@@ -74,7 +74,11 @@ export default function CollectFeesPage() {
 
   const years = useMemo(() => {
     const currentYear = new Date().getFullYear();
-    return Array.from({ length: 5 }, (_, i) => currentYear - 2 + i);
+    const startYear = 2000; // allow selecting from year 2000
+    const endYear = 2050; // allow selecting up to year 2050
+    const yearsArr: number[] = [];
+    for (let y = startYear; y <= endYear; y++) yearsArr.push(y);
+    return yearsArr.reverse();
   }, []);
 
   // Fetch system settings

@@ -34,16 +34,23 @@ interface ClassSummary {
 
 export default function FeeReportPage() {
     const [students, setStudents] = useState<StudentFee[]>([]);
-    const [selectedMonth, setSelectedMonth] = useState(() => {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    });
+    const [selectedMonthNum, setSelectedMonthNum] = useState(() => new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(() => new Date().getFullYear());
     const [loading, setLoading] = useState(true);
 
     const months = [
         'January', 'February', 'March', 'April', 'May', 'June',
         'July', 'August', 'September', 'October', 'November', 'December'
     ];
+
+    const years = useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        const startYear = 2000;
+        const endYear = 2050;
+        const yearsArr: number[] = [];
+        for (let y = startYear; y <= endYear; y++) yearsArr.push(y);
+        return yearsArr.reverse();
+    }, []);
 
     // Overall summary
     const overallSummary = useMemo(() => {
@@ -113,13 +120,14 @@ export default function FeeReportPage() {
 
     useEffect(() => {
         fetchFeeStatus();
-    }, [selectedMonth]);
+    }, [selectedMonthNum, selectedYear]);
 
     const fetchFeeStatus = async () => {
         setLoading(true);
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`/api/fees/status?month=${selectedMonth}`, {
+            const monthValue = `${selectedYear}-${String(selectedMonthNum).padStart(2, '0')}`;
+            const response = await fetch(`/api/fees/status?month=${monthValue}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -134,14 +142,14 @@ export default function FeeReportPage() {
         }
     };
 
-    const getMonthName = (monthValue: string) => {
-        const [year, month] = monthValue.split('-');
-        return `${months[parseInt(month) - 1]} ${year}`;
+    const getMonthName = () => {
+        return `${months[selectedMonthNum - 1]} ${selectedYear}`;
     };
 
     const exportReport = () => {
         // Export class-wise summary
-        let csv = `Fee Report - ${getMonthName(selectedMonth)}\n\n`;
+        const monthValue = `${selectedYear}-${String(selectedMonthNum).padStart(2, '0')}`;
+        let csv = `Fee Report - ${getMonthName()}\n\n`;
         csv += 'OVERALL SUMMARY\n';
         csv += `Total Students,${overallSummary.totalStudents}\n`;
         csv += `Paid,${overallSummary.paidCount}\n`;
@@ -169,7 +177,7 @@ export default function FeeReportPage() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `fee_report_${selectedMonth}.csv`;
+        a.download = `fee_report_${monthValue}.csv`;
         a.click();
         URL.revokeObjectURL(url);
     };
@@ -194,21 +202,30 @@ export default function FeeReportPage() {
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Month</label>
                                 <select
-                                    value={selectedMonth}
-                                    onChange={(e) => setSelectedMonth(e.target.value)}
+                                    value={selectedMonthNum}
+                                    onChange={(e) => setSelectedMonthNum(parseInt(e.target.value))}
                                     className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
                                 >
-                                    {Array.from({ length: 12 }, (_, i) => {
-                                        const date = new Date();
-                                        date.setMonth(date.getMonth() - 6 + i);
-                                        const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-                                        const label = `${months[date.getMonth()]} ${date.getFullYear()}`;
-                                        return <option key={value} value={value}>{label}</option>;
-                                    })}
+                                    {months.map((m, idx) => (
+                                        <option key={idx + 1} value={idx + 1}>{m}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Year</label>
+                                <select
+                                    value={selectedYear}
+                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                    className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900"
+                                >
+                                    {years.map(y => (
+                                        <option key={y} value={y}>{y}</option>
+                                    ))}
                                 </select>
                             </div>
                             <h2 className="text-xl font-semibold text-gray-900">
-                                Fee Report - {getMonthName(selectedMonth)}
+                                Fee Report - {getMonthName()}
                             </h2>
                         </div>
 
