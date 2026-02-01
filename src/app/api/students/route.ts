@@ -111,7 +111,7 @@ async function getStudents(req: NextRequest, context: any, user: any) {
       phone: student.secondaryMobile || '',
       contactNumber: student.secondaryMobile || '',
       parentName: student.linkedParentId?.fullName || '',
-      parentPhone: student.linkedParentId?.phone || '',,
+      parentPhone: student.linkedParentId?.phone || '',
       parentEmail: student.linkedParentId?.email || '',
       dateOfBirth: student.dob,
       dob: student.dob,
