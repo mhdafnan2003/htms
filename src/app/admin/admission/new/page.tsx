@@ -6,8 +6,10 @@ import { useRouter } from 'next/navigation';
 
 interface StudentFormData {
     fullName: string;
+    admissionNumber?: string;
     dateOfBirth: string;
     gender: string;
+    admissionType: string;
     class: string;
     section: string;
     rollNumber: string;
@@ -36,8 +38,10 @@ export default function NewAdmission() {
     const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
     const [formData, setFormData] = useState<StudentFormData>({
         fullName: '',
+        admissionNumber: '',
         dateOfBirth: '',
         gender: '',
+        admissionType: 'PERMANENT',
         class: '',
         section: '',
         rollNumber: '',
@@ -100,7 +104,7 @@ export default function NewAdmission() {
             }
 
             const data = new FormData();
-            
+
             // Append form fields
             Object.entries(formData).forEach(([key, value]) => {
                 if (Array.isArray(value)) {
@@ -177,6 +181,20 @@ export default function NewAdmission() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Admission Number <span className="text-gray-400 text-xs">(Auto-generated if empty)</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="admissionNumber"
+                                        value={formData.admissionNumber}
+                                        onChange={handleChange}
+                                        placeholder="Leave empty to auto-generate"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Full Name <span className="text-red-500">*</span>
                                     </label>
                                     <input
@@ -218,6 +236,22 @@ export default function NewAdmission() {
                                         <option value="Male">Male</option>
                                         <option value="Female">Female</option>
                                         <option value="Other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Admission Type <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        name="admissionType"
+                                        value={formData.admissionType}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="PERMANENT">Permanent</option>
+                                        <option value="TEMPORARY">Temporary</option>
                                     </select>
                                 </div>
 
@@ -457,7 +491,7 @@ export default function NewAdmission() {
                                     </select>
                                 </div>
 
-                                <div style={{display: 'none'}}>
+                                <div style={{ display: 'none' }}>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Section
                                     </label>
@@ -568,7 +602,7 @@ export default function NewAdmission() {
                                             </p>
                                         </div>
                                     </div>
-                                    
+
                                     {selectedFiles.length > 0 && (
                                         <div className="mt-4 space-y-2">
                                             {selectedFiles.map((file, index) => (

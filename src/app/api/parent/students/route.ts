@@ -12,7 +12,7 @@ async function getParentStudents(req: NextRequest, context: any, user: any) {
             linkedParentId: user.userId,
             status: 'ACTIVE'
         })
-            .select('_id studentId fullName classGrade section dob gender email secondaryMobile address monthlyFeeAmount admissionDate')
+            .select('_id studentId admissionNumber admissionType fullName classGrade section dob gender email secondaryMobile address monthlyFeeAmount admissionDate')
             .sort({ fullName: 1 });
 
         return NextResponse.json({ students });

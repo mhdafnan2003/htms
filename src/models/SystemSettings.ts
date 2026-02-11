@@ -9,6 +9,7 @@ export interface ISystemSettings extends Document {
     logoUrl?: string;
     currentSession: string; // e.g., "2023-2024"
     currencySymbol: string;
+    lastClassPromotionDate?: Date;
     updatedAt: Date;
 }
 
@@ -44,6 +45,10 @@ const SystemSettingsSchema = new Schema<ISystemSettings>({
         type: String,
         required: true,
         default: '₹'
+    },
+    lastClassPromotionDate: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true,

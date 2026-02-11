@@ -13,6 +13,7 @@ import CakeIcon from '@mui/icons-material/Cake';
 interface StudentInfo {
   _id: string;
   studentId: string;
+  admissionNumber?: string;
   fullName: string;
   classGrade: string;
   section?: string;
@@ -125,7 +126,9 @@ export default function ParentInfoPage() {
               </div>
               <div className="text-white">
                 <h2 className="text-2xl font-bold">{student.fullName}</h2>
-                <p className="text-blue-100">Student ID: {student.studentId}</p>
+                {student.admissionNumber && (
+                  <p className="text-blue-100">Admission No: {student.admissionNumber}</p>
+                )}
               </div>
             </div>
           </div>

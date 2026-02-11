@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Student from '@/models/Student';
+import User from '@/models/User';
 import { withRole } from '@/lib/middleware';
 import { saveFiles } from '@/lib/fileUpload';
 
@@ -13,7 +14,7 @@ async function getStudentById(req: NextRequest, context: any, user: any) {
         const { id } = params;
 
         const student = await Student.findById(id)
-            .populate('linkedParentId', 'name email phone alternativePhone');
+            .populate('linkedParentId', 'fullName email phone alternativePhone');
 
         if (!student) {
             return NextResponse.json(
@@ -38,6 +39,8 @@ async function getStudentById(req: NextRequest, context: any, user: any) {
         const formattedStudent = {
             _id: student._id,
             studentId: student.studentId,
+            admissionNumber: student.admissionNumber,
+            admissionType: student.admissionType,
             fullName: student.fullName,
             gender: student.gender,
             dob: student.dob,
@@ -135,7 +138,7 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         // Check if request is FormData (for file uploads) or JSON
         if (contentType.includes('multipart/form-data')) {
             const formData = await req.formData();
-            
+
             // Extract existing documents
             const existingDocsStr = formData.get('existingDocuments');
             if (existingDocsStr) {
@@ -186,14 +189,33 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
             updateFields = updateData;
         }
 
+        // Extract parent update fields
+        const parentUpdateFields: any = {};
+        if (updateFields.parentName) {
+            parentUpdateFields.fullName = updateFields.parentName;
+            delete updateFields.parentName;
+        }
+        if (updateFields.parentEmail) {
+            parentUpdateFields.email = updateFields.parentEmail;
+            delete updateFields.parentEmail;
+        }
+        if (updateFields.parentPhone) {
+            parentUpdateFields.phone = updateFields.parentPhone;
+            delete updateFields.parentPhone;
+        }
+        if (updateFields.parentAlternativePhone) {
+            parentUpdateFields.alternativePhone = updateFields.parentAlternativePhone;
+            delete updateFields.parentAlternativePhone;
+        }
+
         // Prepare update object, excluding fields that shouldn't be updated directly
-        const { 
-            _id, 
-            studentId, 
-            linkedParentId, 
-            createdAt, 
-            updatedAt, 
-            ...fieldsToUpdate 
+        const {
+            _id,
+            studentId,
+            linkedParentId,
+            createdAt,
+            updatedAt,
+            ...fieldsToUpdate
         } = updateFields;
 
         // Handle date fields
@@ -204,12 +226,30 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
             fieldsToUpdate.admissionDate = new Date(fieldsToUpdate.admissionDate);
         }
 
+        // First, get the student to find the parent ID
+        const existingStudent = await Student.findById(id);
+        if (!existingStudent) {
+            return NextResponse.json(
+                { message: 'Student not found' },
+                { status: 404 }
+            );
+        }
+
+        // Update parent if there are parent fields to update
+        if (Object.keys(parentUpdateFields).length > 0 && existingStudent.linkedParentId) {
+            await User.findByIdAndUpdate(
+                existingStudent.linkedParentId,
+                parentUpdateFields,
+                { new: true, runValidators: true }
+            );
+        }
+
         // Update the student
         const updatedStudent = await Student.findByIdAndUpdate(
             id,
             fieldsToUpdate,
             { new: true, runValidators: true }
-        ).populate('linkedParentId', 'name email phone alternativePhone');
+        ).populate('linkedParentId', 'fullName email phone alternativePhone');
 
         if (!updatedStudent) {
             return NextResponse.json(
@@ -222,6 +262,8 @@ async function updateStudent(req: NextRequest, context: any, user: any) {
         const formattedStudent = {
             _id: updatedStudent._id,
             studentId: updatedStudent.studentId,
+            admissionNumber: updatedStudent.admissionNumber,
+            admissionType: updatedStudent.admissionType,
             fullName: updatedStudent.fullName,
             gender: updatedStudent.gender,
             dob: updatedStudent.dob,

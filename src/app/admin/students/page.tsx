@@ -13,6 +13,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 interface Student {
   _id: string;
   studentId: string;
+  admissionNumber?: string;
   fullName: string;
   classGrade: string;
   section: string;
@@ -25,6 +26,7 @@ interface Student {
   subjects: string[];
   joinDate: string;
   status: string;
+  admissionType?: 'PERMANENT' | 'TEMPORARY';
 }
 
 export default function StudentsPage() {
@@ -34,6 +36,7 @@ export default function StudentsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [classFilter, setClassFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [admissionTypeFilter, setAdmissionTypeFilter] = useState('');
   const [loading, setLoading] = useState(true);
 
   const classes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
@@ -45,7 +48,7 @@ export default function StudentsPage() {
 
   useEffect(() => {
     filterStudents();
-  }, [students, searchTerm, classFilter, statusFilter]);
+  }, [students, searchTerm, classFilter, statusFilter, admissionTypeFilter]);
 
   const fetchStudents = async () => {
     try {
@@ -97,7 +100,7 @@ export default function StudentsPage() {
     if (searchTerm) {
       filtered = filtered.filter(student =>
         student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        student.studentId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        student.admissionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.parentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.parentEmail.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -109,6 +112,10 @@ export default function StudentsPage() {
 
     if (statusFilter) {
       filtered = filtered.filter(student => student.status === statusFilter);
+    }
+
+    if (admissionTypeFilter) {
+      filtered = filtered.filter(student => student.admissionType === admissionTypeFilter);
     }
 
     setFilteredStudents(filtered);
@@ -154,8 +161,8 @@ export default function StudentsPage() {
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="relative">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <div className="relative md:col-span-2">
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
@@ -188,11 +195,22 @@ export default function StudentsPage() {
               ))}
             </select>
 
+            <select
+              value={admissionTypeFilter}
+              onChange={(e) => setAdmissionTypeFilter(e.target.value)}
+              className="border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">All Types</option>
+              <option value="PERMANENT">Permanent</option>
+              <option value="TEMPORARY">Temporary</option>
+            </select>
+
             <button
               onClick={() => {
                 setSearchTerm('');
                 setClassFilter('');
                 setStatusFilter('');
+                setAdmissionTypeFilter('');
               }}
               className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
@@ -243,9 +261,11 @@ export default function StudentsPage() {
                           >
                             {student.fullName}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {student.studentId}
-                          </div>
+                          {student.admissionNumber && (
+                            <div className="text-sm text-gray-500">
+                              Admission: {student.admissionNumber}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -301,14 +321,14 @@ export default function StudentsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <SchoolIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              {searchTerm || classFilter || statusFilter ? 'No Students Found' : 'No Students Yet'}
+              {searchTerm || classFilter || statusFilter || admissionTypeFilter ? 'No Students Found' : 'No Students Yet'}
             </h2>
             <p className="text-gray-600 mb-4">
-              {searchTerm || classFilter || statusFilter
+              {searchTerm || classFilter || statusFilter || admissionTypeFilter
                 ? 'Try adjusting your filters to see more results.'
                 : 'Get started by adding your first student.'}
             </p>
-            {!searchTerm && !classFilter && !statusFilter && (
+            {!searchTerm && !classFilter && !statusFilter && !admissionTypeFilter && (
               <button
                 onClick={() => router.push('/admin/admission/new')}
                 className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors mx-auto"

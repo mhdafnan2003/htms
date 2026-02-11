@@ -2,6 +2,8 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IStudent extends Document {
   studentId: string;
+  admissionNumber?: string;
+  admissionType?: 'PERMANENT' | 'TEMPORARY';
   fullName: string;
   gender: 'MALE' | 'FEMALE' | 'OTHER';
   dob: Date;
@@ -37,6 +39,16 @@ const StudentSchema = new Schema<IStudent>({
     type: String,
     required: true,
     unique: true,
+  },
+  admissionNumber: {
+    type: String,
+    unique: true,
+    sparse: true, // Allows null/undefined values while maintaining uniqueness
+  },
+  admissionType: {
+    type: String,
+    enum: ['PERMANENT', 'TEMPORARY'],
+    default: 'PERMANENT',
   },
   fullName: {
     type: String,

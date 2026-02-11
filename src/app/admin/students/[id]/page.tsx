@@ -20,6 +20,8 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 interface Student {
     _id: string;
     studentId: string;
+    admissionNumber?: string;
+    admissionType?: 'PERMANENT' | 'TEMPORARY';
     fullName: string;
     gender: string;
     dob: string;
@@ -192,7 +194,11 @@ export default function StudentProfile() {
                         </div>
                         <div className="flex-1">
                             <h1 className="text-2xl font-bold text-gray-900">{student.fullName}</h1>
-                            <p className="text-gray-600 mt-1">Student ID: {student.studentId}</p>
+                            <div className="space-y-1 mt-1">
+                                {student.admissionNumber && (
+                                    <p className="text-blue-600 font-medium">Admission No: {student.admissionNumber}</p>
+                                )}
+                            </div>
                             <div className="flex items-center gap-4 mt-2">
                                 <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${student.status === 'ACTIVE'
                                     ? 'bg-green-100 text-green-800'
@@ -200,6 +206,15 @@ export default function StudentProfile() {
                                     }`}>
                                     {student.status}
                                 </span>
+                                {student.admissionType && (
+                                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
+                                        student.admissionType === 'PERMANENT'
+                                            ? 'bg-blue-100 text-blue-800'
+                                            : 'bg-yellow-100 text-yellow-800'
+                                    }`}>
+                                        {student.admissionType === 'PERMANENT' ? 'Permanent' : 'Temporary'}
+                                    </span>
+                                )}
                                 <span className="text-sm text-gray-600">Class {student.class}</span>
                             </div>
                         </div>
@@ -346,6 +361,20 @@ export default function StudentProfile() {
                             Academic Information
                         </h2>
                         <div className="space-y-3">
+                            {student.admissionNumber && (
+                                <InfoCard
+                                    icon={<SchoolIcon fontSize="small" />}
+                                    label="Admission Number"
+                                    value={student.admissionNumber}
+                                />
+                            )}
+                            {student.admissionType && (
+                                <InfoCard
+                                    icon={<SchoolIcon fontSize="small" />}
+                                    label="Admission Type"
+                                    value={student.admissionType === 'PERMANENT' ? 'Permanent' : 'Temporary'}
+                                />
+                            )}
                             <InfoCard
                                 icon={<SchoolIcon fontSize="small" />}
                                 label="Class"

@@ -58,6 +58,41 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
         const lastStudent = await Student.findOne().sort({ createdAt: -1 });
         const studentId = generateId('STU', lastStudent?.studentId);
 
+        const admissionType = formData.admissionType?.toUpperCase() || 'PERMANENT';
+        let admissionNumber = formData.admissionNumber;
+
+        if (admissionNumber) {
+            // Check if admission number already exists
+            const existingStudent = await Student.findOne({ admissionNumber });
+            if (existingStudent) {
+                return NextResponse.json({
+                    success: false,
+                    message: 'Admission number already exists'
+                }, { status: 400 });
+            }
+        } else {
+            // Generate admission number based on admission type and year
+            const currentYear = new Date().getFullYear();
+            const yearSuffix = currentYear.toString().slice(-2); // Get last 2 digits (e.g., 26 for 2026)
+            const prefix = admissionType === 'PERMANENT' ? 'PAC' : 'TAC';
+
+            // Find the latest admission number for this year and type
+            const latestAdmission = await Student.findOne({
+                admissionNumber: { $regex: `^${prefix}${yearSuffix}/` }
+            }).sort({ admissionNumber: -1 });
+
+            let serialNumber = 1;
+            if (latestAdmission && latestAdmission.admissionNumber) {
+                // Extract the serial number from the latest admission number
+                const match = latestAdmission.admissionNumber.match(/\/(\d+)$/);
+                if (match) {
+                    serialNumber = parseInt(match[1]) + 1;
+                }
+            }
+
+            admissionNumber = `${prefix}${yearSuffix}/${serialNumber}`;
+        }
+
         // Prepare address string
         const fullAddress = `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`;
 
@@ -81,6 +116,8 @@ async function admitStudent(req: NextRequest, context: any, user: any) {
         // Create student with mapped field names
         const student = new Student({
             studentId,
+            admissionNumber,
+            admissionType,
             fullName: formData.fullName,
             gender: formData.gender.toUpperCase(),
             dob: new Date(formData.dateOfBirth),

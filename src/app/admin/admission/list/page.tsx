@@ -13,6 +13,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 interface Student {
     _id: string;
     fullName: string;
+    admissionNumber?: string;
+    admissionType?: 'PERMANENT' | 'TEMPORARY';
     class: string;
     section: string;
     rollNumber: string;
@@ -29,6 +31,7 @@ export default function AdmissionList() {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterClass, setFilterClass] = useState('');
+    const [filterAdmissionType, setFilterAdmissionType] = useState('');
 
     useEffect(() => {
         fetchStudents();
@@ -58,9 +61,11 @@ export default function AdmissionList() {
     const filteredStudents = students.filter(student => {
         const matchesSearch = student.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
             student.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            student.admissionNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             student.parentName?.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesClass = !filterClass || student.class === filterClass;
-        return matchesSearch && matchesClass;
+        const matchesType = !filterAdmissionType || student.admissionType === filterAdmissionType;
+        return matchesSearch && matchesClass && matchesType;
     });
 
     const handleDelete = async (id: string) => {
@@ -108,7 +113,7 @@ export default function AdmissionList() {
                             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search by name, roll number, or parent..."
+                                placeholder="Search by name, admission no., roll number, or parent..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -126,6 +131,16 @@ export default function AdmissionList() {
                             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(cls => (
                                 <option key={cls} value={cls}>Class {cls}</option>
                             ))}
+                        </select>
+
+                        <select
+                            value={filterAdmissionType}
+                            onChange={(e) => setFilterAdmissionType(e.target.value)}
+                            className="px-4 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">All Types</option>
+                            <option value="PERMANENT">Permanent</option>
+                            <option value="TEMPORARY">Temporary</option>
                         </select>
 
                         <Link
@@ -174,7 +189,7 @@ export default function AdmissionList() {
                             <thead className="bg-gray-50 border-b border-gray-200">
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Roll No.
+                                        Admission No.
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Student Name
@@ -209,8 +224,8 @@ export default function AdmissionList() {
                                 ) : (
                                     filteredStudents.map((student) => (
                                         <tr key={student._id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                                {student.rollNumber || '-'}
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                                                {student.admissionNumber || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="text-sm font-medium text-gray-900">{student.fullName}</div>

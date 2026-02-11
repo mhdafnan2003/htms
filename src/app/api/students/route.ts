@@ -4,6 +4,7 @@ import Student from '@/models/Student';
 import User from '@/models/User';
 import { withRole } from '@/lib/middleware';
 import { generateId, hashPassword } from '@/lib/utils';
+import { autoPromoteClasses } from '@/lib/autoPromoteClasses';
 
 async function createStudent(req: NextRequest, context: any, user: any) {
   try {
@@ -68,6 +69,9 @@ async function getStudents(req: NextRequest, context: any, user: any) {
   try {
     await dbConnect();
 
+    // Auto-check for class promotion (runs once per server instance)
+    autoPromoteClasses().catch(err => console.error('[Auto Promotion Error]', err));
+
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
     const status = searchParams.get('status');
@@ -94,6 +98,8 @@ async function getStudents(req: NextRequest, context: any, user: any) {
     const formattedStudents = students.map(student => ({
       _id: student._id,
       studentId: student.studentId,
+      admissionNumber: student.admissionNumber,
+      admissionType: student.admissionType,
       fullName: student.fullName,
       class: student.classGrade,
       classGrade: student.classGrade,
@@ -111,7 +117,7 @@ async function getStudents(req: NextRequest, context: any, user: any) {
       phone: student.secondaryMobile || '',
       contactNumber: student.secondaryMobile || '',
       parentName: student.linkedParentId?.fullName || '',
-      parentPhone: student.linkedParentId?.phone || '',,
+      parentPhone: student.linkedParentId?.phone || '',
       parentEmail: student.linkedParentId?.email || '',
       dateOfBirth: student.dob,
       dob: student.dob,

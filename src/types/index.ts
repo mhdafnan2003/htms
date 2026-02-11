@@ -41,6 +41,8 @@ export interface ParentInfo {
 export interface Student {
     _id: string;
     studentId: string;
+    admissionNumber: string;
+    admissionType: 'PERMANENT' | 'TEMPORARY';
     fullName: string;
     gender: Gender;
     dob: string;
@@ -63,6 +65,7 @@ export interface Student {
 
 export interface CreateStudentDto {
     fullName: string;
+    admissionType: 'PERMANENT' | 'TEMPORARY';
     gender: Gender;
     dob: string;
     classGrade: string;

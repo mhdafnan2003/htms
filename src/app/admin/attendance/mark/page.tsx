@@ -9,6 +9,7 @@ import CloseIcon from '@mui/icons-material/Close';
 interface Student {
   _id: string;
   studentId: string;
+  admissionNumber?: string;
   fullName: string;
   classGrade: string;
   section: string;
@@ -477,7 +478,7 @@ export default function MarkAttendancePage() {
                       <tr key={student._id} className="border-b border-gray-200 hover:bg-gray-50">
                         <td className="sticky left-0 bg-white z-10 px-4 py-3 border-r border-gray-300">
                           <div className="font-medium text-gray-900 text-sm">{student.fullName}</div>
-                          <div className="text-xs text-gray-500">{student.studentId}</div>
+                          <div className="text-xs text-gray-500">{student.admissionNumber || student.studentId}</div>
                         </td>
                         {dayHeaders.map(day => {
                           const cell = attendanceMap[student._id]?.[day];

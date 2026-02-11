@@ -11,6 +11,8 @@ import AddIcon from '@mui/icons-material/Add';
 interface Student {
     _id: string;
     studentId: string;
+    admissionNumber?: string;
+    admissionType?: 'PERMANENT' | 'TEMPORARY';
     fullName: string;
     gender: string;
     dob: string;
@@ -56,7 +58,9 @@ export default function EditStudent() {
 
     const [formData, setFormData] = useState({
         fullName: '',
+        admissionNumber: '',
         gender: '',
+        admissionType: 'PERMANENT',
         dob: '',
         bloodGroup: '',
         secondaryMobile: '',
@@ -111,10 +115,14 @@ export default function EditStudent() {
 
             setStudent(studentData);
 
+
+
             // Set form data in exact structure needed
             setFormData({
                 fullName: studentData.fullName || '',
+                admissionNumber: studentData.admissionNumber || '',
                 gender: studentData.gender || '',
+                admissionType: studentData.admissionType || 'PERMANENT',
                 dob: studentData.dob ? new Date(studentData.dob).toISOString().split('T')[0] : '',
                 bloodGroup: studentData.bloodGroup || '',
                 secondaryMobile: studentData.secondaryMobile || '',
@@ -205,7 +213,7 @@ export default function EditStudent() {
             }
 
             const data = new FormData();
-            
+
             // Append form fields
             Object.entries(formData).forEach(([key, value]) => {
                 if (Array.isArray(value)) {
@@ -315,6 +323,18 @@ export default function EditStudent() {
                                 Personal Information
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Admission Number
+                                    </label>
+                                    <input
+                                        type="text"
+                                        name="admissionNumber"
+                                        value={formData.admissionNumber}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Full Name <span className="text-red-500">*</span>
@@ -597,7 +617,7 @@ export default function EditStudent() {
                                     </select>
                                 </div>
 
-                                <div style={{display: 'none'}}>
+                                <div style={{ display: 'none' }}>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Section
                                     </label>
@@ -622,6 +642,22 @@ export default function EditStudent() {
                                         onChange={handleChange}
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Admission Type <span className="text-red-500">*</span>
+                                    </label>
+                                    <select
+                                        name="admissionType"
+                                        value={formData.admissionType}
+                                        onChange={handleChange}
+                                        required
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    >
+                                        <option value="PERMANENT">Permanent</option>
+                                        <option value="TEMPORARY">Temporary</option>
+                                    </select>
                                 </div>
 
                                 <div>
@@ -707,7 +743,7 @@ export default function EditStudent() {
                                             const isImage = doc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp|gif)$/);
                                             const fileType = isPdf ? 'PDF' : isImage ? 'IMG' : 'DOC';
                                             const bgColor = isPdf ? 'bg-red-100 text-red-700' : isImage ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700';
-                                            
+
                                             return (
                                                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors">
                                                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -777,14 +813,14 @@ export default function EditStudent() {
                                                 className="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none"
                                             >
                                                 <span>Upload files</span>
-                                                <input 
-                                                    id="file-upload" 
-                                                    name="file-upload" 
-                                                    type="file" 
-                                                    className="sr-only" 
-                                                    multiple 
-                                                    onChange={handleFileChange} 
-                                                    accept="image/*,.pdf,.doc,.docx" 
+                                                <input
+                                                    id="file-upload"
+                                                    name="file-upload"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    multiple
+                                                    onChange={handleFileChange}
+                                                    accept="image/*,.pdf,.doc,.docx"
                                                 />
                                             </label>
                                             <p className="pl-1">or drag and drop</p>
@@ -794,7 +830,7 @@ export default function EditStudent() {
                                         </p>
                                     </div>
                                 </div>
-                                
+
                                 {selectedFiles.length > 0 && (
                                     <div className="mt-4 space-y-2">
                                         <h4 className="text-sm font-medium text-gray-700">New Files to Upload</h4>

@@ -25,7 +25,7 @@ async function getMonthlyAttendance(req: NextRequest, context: any, user: any) {
             classGrade,
             status: 'ACTIVE'
         })
-            .select('_id studentId fullName classGrade section')
+            .select('_id studentId admissionNumber fullName classGrade section')
             .sort({ fullName: 1 });
 
         if (students.length === 0) {
